@@ -17,28 +17,31 @@ export default function CreateCategoryModal({ onClose }: CreateCategoryModalProp
   const [catName, setCatName] = useState("");
   const [catDesc, setCatDesc] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!catName.trim()) {
-      toast.error("Category name is required.");
-      return;
-    }
-    createCategoryMutation.mutate(
-      {
-        name: catName,
-        description: catDesc || null,
-      },
-      {
-        onSuccess: () => {
-          toast.success("Category added!");
-          onClose();
-        },
-        onError: (err) => {
-          toast.error(err.message || "Failed to add category.");
-        },
+  const handleSubmit = React.useCallback(
+    (e: React.SyntheticEvent) => {
+      e.preventDefault();
+      if (!catName.trim()) {
+        toast.error("Category name is required.");
+        return;
       }
-    );
-  };
+      createCategoryMutation.mutate(
+        {
+          name: catName,
+          description: catDesc || null,
+        },
+        {
+          onSuccess: () => {
+            toast.success("Category added!");
+            onClose();
+          },
+          onError: (err) => {
+            toast.error(err.message || "Failed to add category.");
+          },
+        }
+      );
+    },
+    [catName, catDesc, createCategoryMutation, onClose]
+  );
 
   return (
     <Card className="border-border bg-accent/15 max-w-md">

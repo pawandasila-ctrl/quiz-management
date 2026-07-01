@@ -22,7 +22,7 @@ export default function RegisterForm() {
     confirmPassword?: string;
   }>({});
 
-  const validate = () => {
+  const validate = React.useCallback(() => {
     const errors: {
       name?: string;
       email?: string;
@@ -49,26 +49,29 @@ export default function RegisterForm() {
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  };
+  }, [name, email, password, confirmPassword]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+  const handleSubmit = React.useCallback(
+    async (e: React.SyntheticEvent) => {
+      e.preventDefault();
+      if (!validate()) return;
 
-    try {
-      await register(name, email, password);
-      toast.success("Account created successfully! Welcome.");
-    } catch (err: unknown) {
-      let errorMessage = "Registration failed. Please try again.";
-      if (err && typeof err === "object" && "response" in err) {
-        const responseErr = err as { response?: { data?: { detail?: string } } };
-        if (responseErr.response?.data?.detail) {
-          errorMessage = responseErr.response.data.detail;
+      try {
+        await register(name, email, password);
+        toast.success("Account created successfully! Welcome.");
+      } catch (err: unknown) {
+        let errorMessage = "Registration failed. Please try again.";
+        if (err && typeof err === "object" && "response" in err) {
+          const responseErr = err as { response?: { data?: { detail?: string } } };
+          if (responseErr.response?.data?.detail) {
+            errorMessage = responseErr.response.data.detail;
+          }
         }
+        toast.error(errorMessage);
       }
-      toast.error(errorMessage);
-    }
-  };
+    },
+    [name, email, password, register, validate]
+  );
 
   return (
     <div className="flex flex-1 items-center justify-center p-6 bg-muted/40 min-h-screen">

@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, func
+from sqlalchemy import select, update, func, text
 from sqlalchemy.orm import selectinload
 from models.quiz import Category, Quiz, Question, Option, QuizStatus
 from schemas.quiz import CategoryCreate, QuizCreate, QuizUpdate, QuestionCreate, OptionCreate
@@ -11,17 +11,15 @@ from datetime import datetime, timezone
 
 # ── Recalculate helper ───────────────────────────────────────────────────────
 async def recalculate_quiz_total_marks(db: AsyncSession, quiz_id: int) -> None:
-    """Helper to recalculate total marks for a quiz based on its questions."""
-    stmt = (
-        update(Quiz)
-        .where(Quiz.id == quiz_id)
-        .values(
-            total_marks=select(func.coalesce(func.sum(Question.marks), 0))
-            .where(Question.quiz_id == quiz_id)
-            .scalar_subquery()
-        )
+    """Recalculate total marks — raw SQL to avoid asyncpg/ORM greenlet issues."""
+    await db.execute(
+        text(
+            "UPDATE quizzes SET total_marks = "
+            "(SELECT COALESCE(SUM(marks), 0) FROM questions WHERE quiz_id = :qid) "
+            "WHERE id = :qid"
+        ),
+        {"qid": quiz_id},
     )
-    await db.execute(stmt)
     await db.commit()
 
 async def get_question_by_id(db: AsyncSession, question_id: int) -> Question:
@@ -173,20 +171,21 @@ async def create_question(db: AsyncSession, quiz_id: int, question_in: QuestionC
     db.add(new_q)
     await db.commit()
     await db.refresh(new_q)
+    new_q_id = new_q.id
 
     if options_data:
-        for opt_in in options_data:
-            new_opt = Option(
-                question_id=new_q.id,
-                text=opt_in.text,
-                is_correct=opt_in.is_correct,
-                order=opt_in.order
-            )
-            db.add(new_opt)
-        await db.commit()
-    
+      for opt_in in options_data:
+        new_opt = Option(
+            question_id=new_q_id,
+            text=opt_in.text,
+            is_correct=opt_in.is_correct,
+            order=opt_in.order,
+        )
+        db.add(new_opt)
+      await db.commit()
+
     await recalculate_quiz_total_marks(db, quiz_id)
-    return await get_question_by_id(db, new_q.id)
+    return await get_question_by_id(db, new_q_id)
 
 async def update_question(db: AsyncSession, question_id: int, question_in: QuestionCreate) -> Question:
     query = select(Question).filter(Question.id == question_id)

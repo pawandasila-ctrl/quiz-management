@@ -35,15 +35,14 @@ DATABASE_URL, connect_args = get_engine_url_and_args(settings.DATABASE_URL)
 
 engine = create_async_engine(
     DATABASE_URL,
-    pool_pre_ping=True,
     echo=settings.ENVIRONMENT == "development",
     connect_args=connect_args,
 )
 
-
 SessionLocal = async_sessionmaker(
     autocommit=False,
     autoflush=False,
+    expire_on_commit=False,
     bind=engine,
     class_=AsyncSession
 )

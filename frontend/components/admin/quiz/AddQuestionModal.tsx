@@ -30,7 +30,10 @@ interface AddQuestionModalProps {
   onClose: () => void;
 }
 
-export default function AddQuestionModal({ quizId, onClose }: AddQuestionModalProps) {
+export default function AddQuestionModal({
+  quizId,
+  onClose,
+}: AddQuestionModalProps) {
   const createQuestionMutation = useCreateQuestion(quizId);
 
   const [qText, setQText] = useState("");
@@ -49,20 +52,25 @@ export default function AddQuestionModal({ quizId, onClose }: AddQuestionModalPr
 
   const [tfCorrect, setTfCorrect] = useState<"true" | "false">("true");
 
-  const handleMcqOptionTextChange = useCallback((index: number, text: string) => {
-    setMcqOptions((prev) => {
-      const copy = [...prev];
-      copy[index] = { ...copy[index], text };
-      return copy;
-    });
-  }, []);
+  const handleMcqOptionTextChange = useCallback(
+    (index: number, text: string) => {
+      setMcqOptions((prev) => {
+        const copy = [...prev];
+        copy[index] = { ...copy[index], text };
+        return copy;
+      });
+    },
+    [],
+  );
 
   const handleMcqCorrectToggle = useCallback((index: number) => {
-    setMcqOptions((prev) => prev.map((opt, i) => ({ ...opt, is_correct: i === index })));
+    setMcqOptions((prev) =>
+      prev.map((opt, i) => ({ ...opt, is_correct: i === index })),
+    );
   }, []);
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    (e: React.SyntheticEvent) => {
       e.preventDefault();
 
       if (!qText.trim()) {
@@ -111,10 +119,21 @@ export default function AddQuestionModal({ quizId, onClose }: AddQuestionModalPr
           onError: (err) => {
             toast.error(err.message || "Failed to add question.");
           },
-        }
+        },
       );
     },
-    [qText, qType, qMarks, qOrder, qExplanation, qImageUrl, mcqOptions, tfCorrect, createQuestionMutation, onClose]
+    [
+      qText,
+      qType,
+      qMarks,
+      qOrder,
+      qExplanation,
+      qImageUrl,
+      mcqOptions,
+      tfCorrect,
+      createQuestionMutation,
+      onClose,
+    ],
   );
 
   return (
@@ -207,7 +226,6 @@ export default function AddQuestionModal({ quizId, onClose }: AddQuestionModalPr
               />
             </div>
 
-            {/* Options */}
             <div className="border-t border-border pt-4 space-y-3">
               <Label className="font-semibold">
                 {qType === "mcq" ? "Answer Options" : "Correct Answer"}
@@ -234,7 +252,9 @@ export default function AddQuestionModal({ quizId, onClose }: AddQuestionModalPr
                       <Input
                         placeholder={`Option ${idx + 1}`}
                         value={opt.text}
-                        onChange={(e) => handleMcqOptionTextChange(idx, e.target.value)}
+                        onChange={(e) =>
+                          handleMcqOptionTextChange(idx, e.target.value)
+                        }
                       />
                     </div>
                   ))}
@@ -250,14 +270,14 @@ export default function AddQuestionModal({ quizId, onClose }: AddQuestionModalPr
                 >
                   <label
                     htmlFor="tf-true"
-                    className="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border border-border p-4 hover:bg-muted transition-colors has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5"
+                    className="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border border-border p-4 hover:bg-muted transition-colors has-data-[state=checked]:border-primary has-data-[state=checked]:bg-primary/5"
                   >
                     <RadioGroupItem id="tf-true" value="true" />
                     <span className="text-sm font-medium">True</span>
                   </label>
                   <label
                     htmlFor="tf-false"
-                    className="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border border-border p-4 hover:bg-muted transition-colors has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5"
+                    className="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border border-border p-4 hover:bg-muted transition-colors has-data-[state=checked]:border-primary has-data-[state=checked]:bg-primary/5"
                   >
                     <RadioGroupItem id="tf-false" value="false" />
                     <span className="text-sm font-medium">False</span>
@@ -271,7 +291,11 @@ export default function AddQuestionModal({ quizId, onClose }: AddQuestionModalPr
             <Button variant="outline" type="button" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createQuestionMutation.isPending} className="gap-2">
+            <Button
+              type="submit"
+              disabled={createQuestionMutation.isPending}
+              className="gap-2"
+            >
               {createQuestionMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (

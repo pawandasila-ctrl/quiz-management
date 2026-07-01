@@ -1,10 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -12,6 +10,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface ConfirmDialogProps {
   isOpen?: boolean;
@@ -29,11 +29,12 @@ interface ConfirmDialogProps {
     | "ghost"
     | "link";
   trigger?: React.ReactNode;
+  isLoading?: boolean;
 }
 
 export default function ConfirmDialog({
-  isOpen,
-  onOpenChange,
+  isOpen: controlledIsOpen,
+  onOpenChange: controlledOnOpenChange,
   title,
   description,
   onConfirm,
@@ -41,20 +42,62 @@ export default function ConfirmDialog({
   cancelText = "Cancel",
   variant = "destructive",
   trigger,
+  isLoading = false,
 }: ConfirmDialogProps) {
+  const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(false);
+
+  const isControlled = controlledIsOpen !== undefined;
+  const isOpen = isControlled ? controlledIsOpen : uncontrolledIsOpen;
+  const setIsOpen = isControlled
+    ? controlledOnOpenChange
+    : setUncontrolledIsOpen;
+
+  useEffect(() => {
+    if (!isControlled && uncontrolledIsOpen && !isLoading) {
+    }
+  }, [isLoading, isControlled, uncontrolledIsOpen]);
+
+  const handleOpenChange = (open: boolean) => {
+    if (isLoading) return;
+    setIsOpen?.(open);
+  };
+
+  const handleConfirm = () => {
+    onConfirm();
+    if (!isControlled && !isLoading) {
+      setIsOpen?.(false);
+    }
+  };
+
   return (
-    <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
-      {trigger && <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>}
+    <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
+      {trigger && (
+        <AlertDialogTrigger asChild disabled={isLoading}>
+          {trigger}
+        </AlertDialogTrigger>
+      )}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel variant="outline">{cancelText}</AlertDialogCancel>
-          <AlertDialogAction variant={variant} onClick={onConfirm}>
-            {confirmText}
-          </AlertDialogAction>
+          <Button
+            variant="outline"
+            disabled={isLoading}
+            onClick={() => setIsOpen?.(false)}
+          >
+            {cancelText}
+          </Button>
+          <Button
+            variant={variant}
+            disabled={isLoading}
+            onClick={handleConfirm}
+            className="min-w-[80px]"
+          >
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading ? "Deleting..." : confirmText}
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

@@ -44,7 +44,7 @@ export default function CreateQuizModal({ categories, onClose }: CreateQuizModal
   const [shuffleQuestions, setShuffleQuestions] = useState(false);
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    (e: React.SyntheticEvent) => {
       e.preventDefault();
       if (!title.trim()) {
         toast.error("Quiz title is required.");

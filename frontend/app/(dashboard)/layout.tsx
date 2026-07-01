@@ -118,11 +118,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <SidebarMenu>
                   {navItems.map((item) => {
                     // Active: exact match OR starts with url (but prevent /admin matching /admin/categories)
-                    const isActive =
-                      pathname === item.url ||
-                      (item.url !== "/admin" &&
+                    const isActive = (() => {
+                      if (pathname === item.url) return true;
+                      if (item.url === "/admin" && pathname.startsWith("/admin/quiz")) return true;
+                      if (item.url === "/dashboard" && pathname.startsWith("/dashboard/quiz")) return true;
+                      return (
+                        item.url !== "/admin" &&
                         item.url !== "/dashboard" &&
-                        pathname.startsWith(item.url + "/"));
+                        pathname.startsWith(item.url + "/")
+                      );
+                    })();
                     return (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton

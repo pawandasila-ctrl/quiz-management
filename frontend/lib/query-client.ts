@@ -1,17 +1,21 @@
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import logger from "./utils/logger";
+import { AxiosError } from "axios";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: (failureCount, error) => {
-        logger.error(
-          "Query Error",
+        if (error instanceof AxiosError && error.response?.status === 401) {
+          return false;
+        }
+        logger.warn(
+          "Query retry",
           { failureCount, error },
           { module: "QueryClient" },
         );
-        return failureCount < 3;
+        return failureCount < 2;
       },
       refetchOnWindowFocus: process.env.NODE_ENV === "production",
       staleTime: 3 * 60 * 1000,
@@ -22,7 +26,6 @@ const queryClient = new QueryClient({
           error instanceof Error
             ? error.message
             : "An unexpected error occurred";
-
         if (message === "NEXT_REDIRECT") return;
         toast.error(message);
       },

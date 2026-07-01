@@ -2,7 +2,11 @@
 
 import React, { useCallback, useMemo } from "react";
 import Link from "next/link";
-import { usePublishQuiz, useCloseQuiz, useReleaseResults } from "@/models/quiz/hooks";
+import {
+  usePublishQuiz,
+  useCloseQuiz,
+  useReleaseResults,
+} from "@/models/quiz/hooks";
 import { Quiz, QuizStatus } from "@/models/quiz/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +20,6 @@ import {
   Star,
   Layers,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +49,6 @@ const STATUS_CONFIG: Record<
 };
 
 export default function QuizCard({ quiz }: QuizCardProps) {
-  const router = useRouter();
   const publishMutation = usePublishQuiz();
   const closeMutation = useCloseQuiz();
   const releaseResultsMutation = useReleaseResults();
@@ -55,7 +57,8 @@ export default function QuizCard({ quiz }: QuizCardProps) {
 
   const handlePublish = useCallback(() => {
     publishMutation.mutate(quiz.id, {
-      onSuccess: () => toast.success("Quiz published! Students can now take it."),
+      onSuccess: () =>
+        toast.success("Quiz published! Students can now take it."),
       onError: (err) => toast.error(err.message || "Failed to publish quiz."),
     });
   }, [publishMutation, quiz.id]);
@@ -70,16 +73,13 @@ export default function QuizCard({ quiz }: QuizCardProps) {
   const handleRelease = useCallback(() => {
     releaseResultsMutation.mutate(quiz.id, {
       onSuccess: () => toast.success("Results are now visible to students!"),
-      onError: (err) => toast.error(err.message || "Failed to release results."),
+      onError: (err) =>
+        toast.error(err.message || "Failed to release results."),
     });
   }, [releaseResultsMutation, quiz.id]);
 
   return (
     <div className="group relative flex flex-col rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
-      {/* Status accent bar */}
-      <div className={cn("h-1 w-full", statusCfg.accent)} />
-
-      {/* Header */}
       <div className="flex flex-col gap-3 p-5 pb-4">
         <div className="flex items-start justify-between gap-2">
           <Badge
@@ -91,7 +91,7 @@ export default function QuizCard({ quiz }: QuizCardProps) {
           <span
             className={cn(
               "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold capitalize shrink-0",
-              statusCfg.badge
+              statusCfg.badge,
             )}
           >
             {statusCfg.label}
@@ -108,14 +108,17 @@ export default function QuizCard({ quiz }: QuizCardProps) {
         </div>
       </div>
 
-      {/* Stats row */}
       <div className="mx-5 mb-4 grid grid-cols-3 gap-2 rounded-lg bg-muted/50 p-3 border border-border/60">
         <div className="flex flex-col items-center gap-1">
           <div className="flex items-center gap-1 text-muted-foreground">
             <Layers className="h-3.5 w-3.5" />
           </div>
-          <span className="text-sm font-bold text-foreground">{quiz.total_marks}</span>
-          <span className="text-[10px] text-muted-foreground leading-none">marks</span>
+          <span className="text-sm font-bold text-foreground">
+            {quiz.total_marks}
+          </span>
+          <span className="text-[10px] text-muted-foreground leading-none">
+            marks
+          </span>
         </div>
         <div className="flex flex-col items-center gap-1 border-x border-border/60">
           <div className="flex items-center gap-1 text-muted-foreground">
@@ -132,12 +135,15 @@ export default function QuizCard({ quiz }: QuizCardProps) {
           <div className="flex items-center gap-1 text-muted-foreground">
             <Star className="h-3.5 w-3.5" />
           </div>
-          <span className="text-sm font-bold text-foreground">{quiz.pass_mark}</span>
-          <span className="text-[10px] text-muted-foreground leading-none">pass mark</span>
+          <span className="text-sm font-bold text-foreground">
+            {quiz.pass_mark}
+          </span>
+          <span className="text-[10px] text-muted-foreground leading-none">
+            pass mark
+          </span>
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex flex-wrap items-center gap-2 px-5 pb-4 pt-1 border-t border-border/60 mt-auto">
         <Link
           href={`/admin/quiz/${quiz.id}`}

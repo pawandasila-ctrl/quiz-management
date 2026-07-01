@@ -15,7 +15,7 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [formErrors, setFormErrors] = useState<{ email?: string; password?: string }>({});
 
-  const validate = () => {
+  const validate = React.useCallback(() => {
     const errors: { email?: string; password?: string } = {};
     if (!email) {
       errors.email = "Email address is required";
@@ -29,26 +29,29 @@ export default function LoginForm() {
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  };
+  }, [email, password]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+  const handleSubmit = React.useCallback(
+    async (e: React.SyntheticEvent) => {
+      e.preventDefault();
+      if (!validate()) return;
 
-    try {
-      await login(email, password);
-      toast.success("Welcome back!");
-    } catch (err: unknown) {
-      let errorMessage = "Incorrect email or password.";
-      if (err && typeof err === "object" && "response" in err) {
-        const responseErr = err as { response?: { data?: { detail?: string } } };
-        if (responseErr.response?.data?.detail) {
-          errorMessage = responseErr.response.data.detail;
+      try {
+        await login(email, password);
+        toast.success("Welcome back!");
+      } catch (err: unknown) {
+        let errorMessage = "Incorrect email or password.";
+        if (err && typeof err === "object" && "response" in err) {
+          const responseErr = err as { response?: { data?: { detail?: string } } };
+          if (responseErr.response?.data?.detail) {
+            errorMessage = responseErr.response.data.detail;
+          }
         }
+        toast.error(errorMessage);
       }
-      toast.error(errorMessage);
-    }
-  };
+    },
+    [email, password, login, validate]
+  );
 
   return (
     <div className="flex flex-1 items-center justify-center p-6 bg-muted/40 min-h-screen">

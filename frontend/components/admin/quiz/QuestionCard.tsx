@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { useDeleteQuestion } from "@/models/quiz/hooks";
 import { Question } from "@/models/quiz/types";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -26,10 +26,14 @@ export default function QuestionCard({
   isDraft,
 }: QuestionCardProps) {
   const deleteQuestionMutation = useDeleteQuestion(quizId);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleDelete = useCallback(() => {
     deleteQuestionMutation.mutate(question.id, {
-      onSuccess: () => toast.success("Question deleted successfully."),
+      onSuccess: () => {
+        toast.success("Question deleted successfully.");
+        setShowDeleteConfirm(false);
+      },
       onError: (err) =>
         toast.error(err.message || "Failed to delete question."),
     });
@@ -73,16 +77,20 @@ export default function QuestionCard({
         </div>
         {isDraft && (
           <ConfirmDialog
+            isOpen={showDeleteConfirm}
+            onOpenChange={setShowDeleteConfirm}
             title="Delete Question"
             description="Are you sure you want to delete this question? This action cannot be undone."
             onConfirm={handleDelete}
             confirmText="Delete"
             variant="destructive"
+            isLoading={deleteQuestionMutation.isPending}
             trigger={
               <Button
                 variant="ghost"
                 size="icon"
                 disabled={deleteQuestionMutation.isPending}
+                onClick={() => setShowDeleteConfirm(true)}
                 className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-md"
               >
                 <Trash2 className="h-4 w-4" />
