@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: quiz_backend
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - /app/venv
+      - /app/__pycache__
+    environment:
+      - ENVIRONMENT=development
+    command: uvicorn main:app --host 0.0.0.0 --port 5001 --reload
