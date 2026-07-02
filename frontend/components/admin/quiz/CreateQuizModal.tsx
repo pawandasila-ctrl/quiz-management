@@ -158,6 +158,9 @@ export default function CreateQuizModal({ categories, onClose }: CreateQuizModal
                   value={passMark}
                   onChange={(e) => setPassMark(Number(e.target.value))}
                 />
+                <p className="text-[10px] text-muted-foreground leading-normal mt-0.5">
+                  Absolute score required to pass (not a percentage).
+                </p>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="quiz-attempts">Max Attempts</Label>
