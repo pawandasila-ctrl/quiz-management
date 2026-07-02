@@ -234,7 +234,7 @@ async def get_attempt_result(db: AsyncSession, attempt_id: int, user: User) -> Q
     query = select(QuizAttempt).options(
         selectinload(QuizAttempt.student),
         selectinload(QuizAttempt.quiz),
-        selectinload(QuizAttempt.answers).selectinload(Answer.question),
+        selectinload(QuizAttempt.answers).selectinload(Answer.question).selectinload(Question.options),
         selectinload(QuizAttempt.answers).selectinload(Answer.selected_option)
     ).filter(QuizAttempt.id == attempt_id)
 
