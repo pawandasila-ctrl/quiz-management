@@ -12,13 +12,19 @@ export async function getStudentAttemptsRequest(): Promise<QuizAttempt[]> {
   return res.data;
 }
 
-export async function getStudentQuizDetailsRequest(quizId: number): Promise<Quiz> {
+export async function getStudentQuizDetailsRequest(
+  quizId: number,
+): Promise<Quiz> {
   const res = await axiosClient.get<Quiz>(`/student/quiz/${quizId}`);
   return res.data;
 }
 
-export async function startQuizAttemptRequest(quizId: number): Promise<QuizAttempt> {
-  const res = await axiosClient.post<QuizAttempt>(`/student/quiz/${quizId}/start`);
+export async function startQuizAttemptRequest(
+  quizId: number,
+): Promise<QuizAttempt> {
+  const res = await axiosClient.post<QuizAttempt>(
+    `/student/quiz/${quizId}/start`,
+  );
   return res.data;
 }
 
@@ -29,23 +35,35 @@ export interface SaveAnswerPayload {
 
 export async function submitAnswerRequest(
   attemptId: number,
-  payload: SaveAnswerPayload
+  payload: SaveAnswerPayload,
 ): Promise<void> {
   await axiosClient.post(`/student/attempt/${attemptId}/answer`, payload);
 }
 
-export async function finalizeAttemptRequest(attemptId: number): Promise<QuizAttempt> {
-  const res = await axiosClient.post<QuizAttempt>(`/student/attempt/${attemptId}/submit`);
+export async function finalizeAttemptRequest(
+  attemptId: number,
+): Promise<QuizAttempt> {
+  const res = await axiosClient.post<QuizAttempt>(
+    `/student/attempt/${attemptId}/submit`,
+  );
   return res.data;
 }
 
-export async function getQuizLeaderboardRequest(quizId: number): Promise<LeaderboardEntry[]> {
-  const res = await axiosClient.get<LeaderboardEntry[]>(`/student/quiz/${quizId}/leaderboard`);
+export async function getQuizLeaderboardRequest(
+  quizId: number,
+): Promise<LeaderboardEntry[]> {
+  const res = await axiosClient.get<LeaderboardEntry[]>(
+    `/student/quiz/${quizId}/leaderboard`,
+  );
   return res.data;
 }
 
-export async function getAttemptResultRequest(attemptId: number): Promise<QuizAttempt> {
-  const res = await axiosClient.get<QuizAttempt>(`/student/attempt/${attemptId}/result`);
+export async function getAttemptResultRequest(
+  attemptId: number,
+): Promise<QuizAttempt> {
+  const res = await axiosClient.get<QuizAttempt>(
+    `/student/attempt/${attemptId}/result`,
+  );
   return res.data;
 }
 
@@ -56,8 +74,17 @@ export async function getAdminQuizzesRequest(): Promise<Quiz[]> {
   return res.data;
 }
 
-export async function getAdminQuizDetailsRequest(quizId: number): Promise<Quiz> {
+export async function getAdminQuizDetailsRequest(
+  quizId: number,
+): Promise<Quiz> {
   const res = await axiosClient.get<Quiz>(`/admin/quiz/${quizId}`);
+  return res.data;
+}
+
+export async function getAdminQuizAttemptsRequest(
+  quizId: number,
+): Promise<QuizAttempt[]> {
+  const res = await axiosClient.get<QuizAttempt[]>(`/admin/quiz/${quizId}/attempts`);
   return res.data;
 }
 
@@ -71,7 +98,6 @@ export async function getAdminUsersRequest(): Promise<User[]> {
   return res.data;
 }
 
-
 export interface CreateQuizPayload {
   title: string;
   description: string | null;
@@ -82,7 +108,9 @@ export interface CreateQuizPayload {
   max_attempts: number;
 }
 
-export async function createQuizRequest(payload: CreateQuizPayload): Promise<Quiz> {
+export async function createQuizRequest(
+  payload: CreateQuizPayload,
+): Promise<Quiz> {
   const res = await axiosClient.post<Quiz>("/admin/quiz", payload);
   return res.data;
 }
@@ -92,12 +120,17 @@ export interface CreateCategoryPayload {
   description: string | null;
 }
 
-export async function createCategoryRequest(payload: CreateCategoryPayload): Promise<Category> {
+export async function createCategoryRequest(
+  payload: CreateCategoryPayload,
+): Promise<Category> {
   const res = await axiosClient.post<Category>("/admin/categories", payload);
   return res.data;
 }
 
-export async function updateUserRoleRequest(userId: number, role: UserRole): Promise<void> {
+export async function updateUserRoleRequest(
+  userId: number,
+  role: UserRole,
+): Promise<void> {
   await axiosClient.put(`/admin/users/${userId}/role?role=${role}`);
 }
 
@@ -129,7 +162,7 @@ export interface CreateQuestionPayload {
 
 export async function createQuestionRequest(
   quizId: number,
-  payload: CreateQuestionPayload
+  payload: CreateQuestionPayload,
 ): Promise<void> {
   await axiosClient.post(`/admin/quiz/${quizId}/questions`, payload);
 }

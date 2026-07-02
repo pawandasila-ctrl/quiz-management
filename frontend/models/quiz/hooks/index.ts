@@ -10,6 +10,7 @@ import {
   getAttemptResultRequest,
   getAdminQuizzesRequest,
   getAdminQuizDetailsRequest,
+  getAdminQuizAttemptsRequest,
   getAdminCategoriesRequest,
   getAdminUsersRequest,
   createQuizRequest,
@@ -118,6 +119,14 @@ export function useAdminQuizDetails(quizId: number) {
   return useQuery<Quiz, Error>({
     queryKey: ["admin-quiz-details", quizId],
     queryFn: () => getAdminQuizDetailsRequest(quizId),
+    enabled: !isNaN(quizId),
+  });
+}
+
+export function useAdminQuizAttempts(quizId: number) {
+  return useQuery<QuizAttempt[], Error>({
+    queryKey: ["admin-quiz-attempts", quizId],
+    queryFn: () => getAdminQuizAttemptsRequest(quizId),
     enabled: !isNaN(quizId),
   });
 }

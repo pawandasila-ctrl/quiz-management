@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   usePublishQuiz,
@@ -19,9 +19,11 @@ import {
   Clock,
   Star,
   Layers,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import AdminAttemptsModal from "./AdminAttemptsModal";
 
 interface QuizCardProps {
   quiz: Quiz;
@@ -52,6 +54,7 @@ export default function QuizCard({ quiz }: QuizCardProps) {
   const publishMutation = usePublishQuiz();
   const closeMutation = useCloseQuiz();
   const releaseResultsMutation = useReleaseResults();
+  const [showAttempts, setShowAttempts] = useState(false);
 
   const statusCfg = useMemo(() => STATUS_CONFIG[quiz.status], [quiz.status]);
 
@@ -153,6 +156,18 @@ export default function QuizCard({ quiz }: QuizCardProps) {
           Edit Builder
         </Link>
 
+        {quiz.status !== "draft" && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowAttempts(true)}
+            className="h-8 gap-1.5 text-xs border-border hover:bg-accent"
+          >
+            <Users className="h-3.5 w-3.5 text-muted-foreground" />
+            Submissions
+          </Button>
+        )}
+
         {quiz.status === "draft" && (
           <Button
             size="sm"
@@ -201,6 +216,13 @@ export default function QuizCard({ quiz }: QuizCardProps) {
           </Link>
         )}
       </div>
+
+      {showAttempts && (
+        <AdminAttemptsModal
+          quiz={quiz}
+          onClose={() => setShowAttempts(false)}
+        />
+      )}
     </div>
   );
 }

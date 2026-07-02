@@ -66,6 +66,11 @@ class QuizAttemptDetailResponse(QuizAttemptResponse):
     answers: List[AnswerResponse] = []
     model_config = ConfigDict(from_attributes=True)
 
+class AdminQuizAttemptResponse(QuizAttemptResponse):
+    """Includes student profile details for admin attempts list."""
+    student: UserResponse
+    model_config = ConfigDict(from_attributes=True)
+
 # ── Leaderboard Entry ─────────────────────────────────────────────────────────
 class LeaderboardEntry(BaseModel):
     rank: int

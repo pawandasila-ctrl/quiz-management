@@ -271,11 +271,8 @@ async def get_quiz_leaderboard(db: AsyncSession, quiz_id: int, user: User) -> li
     if not quiz:
         raise QuizNotFoundError()
 
-    
     if user.role == UserRole.STUDENT and not quiz.results_visible:
         raise QuizStatusError("Leaderboard is not released by the admin yet.")
-
-    
     
     best_attempts_sub = (
         select(

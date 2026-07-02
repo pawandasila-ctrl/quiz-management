@@ -79,6 +79,11 @@ export interface QuizAttempt {
   graded_at: string | null;
   quiz?: Quiz;
   answers?: Answer[];
+  student?: {
+    id: number;
+    name: string;
+    email: string;
+  };
 }
 
 export interface LeaderboardEntry {

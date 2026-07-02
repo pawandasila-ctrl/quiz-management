@@ -28,6 +28,7 @@ interface StudentQuizResultModalProps {
   quiz: Quiz;
   onClose: () => void;
   fallbackAttempt?: QuizAttempt | null;
+  isAdmin?: boolean;
 }
 
 export default function StudentQuizResultModal({
@@ -35,16 +36,15 @@ export default function StudentQuizResultModal({
   quiz,
   onClose,
   fallbackAttempt,
+  isAdmin = false,
 }: StudentQuizResultModalProps) {
-  // Fetch attempt result (which requires results_visible to be true in backend)
   const { data: attempt, isLoading } = useQuizAttemptResult(attemptId, {
-    enabled: quiz.results_visible && !isNaN(attemptId) && attemptId > 0,
+    enabled:
+      (quiz.results_visible || isAdmin) && !isNaN(attemptId) && attemptId > 0,
   });
 
-  // Fallback to basic stats if results_visible is false
   const activeAttempt = attempt || fallbackAttempt;
 
-  // Helper to format time taken
   const formatTime = (seconds: number | null) => {
     if (seconds === null || seconds === undefined) return "N/A";
     const mins = Math.floor(seconds / 60);
@@ -69,12 +69,15 @@ export default function StudentQuizResultModal({
               Loading attempt review...
             </p>
           </div>
-        ) : !quiz.results_visible ? (
+        ) : !quiz.results_visible && !isAdmin ? (
           <div className="flex-1 flex flex-col items-center justify-center py-10 gap-3 text-center">
             <AlertCircle className="h-10 w-10 text-muted-foreground" />
-            <p className="font-semibold text-foreground">Results Not Released</p>
+            <p className="font-semibold text-foreground">
+              Results Not Released
+            </p>
             <p className="text-sm text-muted-foreground max-w-sm px-4">
-              Quiz results have not been released by the admin yet. Please check back later.
+              Quiz results have not been released by the admin yet. Please check
+              back later.
             </p>
           </div>
         ) : (
@@ -85,22 +88,32 @@ export default function StudentQuizResultModal({
                   {/* Attempt Overview Cards */}
                   <div className="grid grid-cols-3 gap-3 p-4 bg-muted/40 rounded-xl border border-border/80">
                     <div className="flex flex-col items-center justify-center text-center p-2">
-                      <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Score</span>
+                      <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                        Score
+                      </span>
                       <span className="text-2xl font-bold mt-1 text-foreground">
                         {activeAttempt.score ?? 0}
-                        <span className="text-xs text-muted-foreground font-normal"> / {quiz.total_marks}</span>
+                        <span className="text-xs text-muted-foreground font-normal">
+                          {" "}
+                          / {quiz.total_marks}
+                        </span>
                       </span>
                     </div>
 
                     <div className="flex flex-col items-center justify-center text-center p-2 border-x border-border/60">
-                      <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Result</span>
+                      <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                        Result
+                      </span>
                       <div className="mt-1.5">
                         {activeAttempt.passed ? (
                           <Badge className="bg-green-600 hover:bg-green-600 text-white gap-1 py-0.5 text-xs font-semibold">
                             <CheckCircle2 className="h-3 w-3" /> Passed
                           </Badge>
                         ) : (
-                          <Badge variant="destructive" className="gap-1 py-0.5 text-xs font-semibold">
+                          <Badge
+                            variant="destructive"
+                            className="gap-1 py-0.5 text-xs font-semibold"
+                          >
                             <XCircle className="h-3 w-3" /> Failed
                           </Badge>
                         )}
@@ -108,7 +121,9 @@ export default function StudentQuizResultModal({
                     </div>
 
                     <div className="flex flex-col items-center justify-center text-center p-2">
-                      <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Time Taken</span>
+                      <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                        Time Taken
+                      </span>
                       <span className="text-sm font-semibold mt-2 flex items-center gap-1 text-foreground">
                         <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                         {formatTime(activeAttempt.time_taken_seconds)}
@@ -128,7 +143,9 @@ export default function StudentQuizResultModal({
                         {activeAttempt.answers.map((ans, idx) => {
                           const q = ans.question;
                           if (!q) return null;
-                          const correctOpt = q.options?.find((o) => o.is_correct);
+                          const correctOpt = q.options?.find(
+                            (o) => o.is_correct,
+                          );
 
                           return (
                             <div
@@ -150,18 +167,22 @@ export default function StudentQuizResultModal({
 
                               <div className="grid gap-2 text-xs pt-1">
                                 {/* Selected Option */}
-                                <div className={`p-2.5 rounded-lg border flex items-center gap-2 ${
-                                  ans.is_correct
-                                    ? "bg-green-50/50 border-green-200 text-green-800"
-                                    : "bg-red-50/50 border-red-200 text-red-800"
-                                }`}>
+                                <div
+                                  className={`p-2.5 rounded-lg border flex items-center gap-2 ${
+                                    ans.is_correct
+                                      ? "bg-green-50/50 border-green-200 text-green-800"
+                                      : "bg-red-50/50 border-red-200 text-red-800"
+                                  }`}
+                                >
                                   {ans.is_correct ? (
                                     <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
                                   ) : (
                                     <XCircle className="h-4 w-4 text-red-600 shrink-0" />
                                   )}
                                   <span>
-                                    <strong>Your Answer:</strong> {ans.selected_option?.text || "No option selected"}
+                                    <strong>Your Answer:</strong>{" "}
+                                    {ans.selected_option?.text ||
+                                      "No option selected"}
                                   </span>
                                 </div>
 
@@ -170,7 +191,8 @@ export default function StudentQuizResultModal({
                                   <div className="p-2.5 rounded-lg border border-green-150 bg-green-50/20 text-green-800 flex items-center gap-2">
                                     <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
                                     <span>
-                                      <strong>Correct Answer:</strong> {correctOpt.text}
+                                      <strong>Correct Answer:</strong>{" "}
+                                      {correctOpt.text}
                                     </span>
                                   </div>
                                 )}
@@ -179,7 +201,10 @@ export default function StudentQuizResultModal({
                               {/* Explanation */}
                               {q.explanation && (
                                 <div className="p-3 bg-muted/40 rounded-lg text-xs text-muted-foreground border border-border/60">
-                                  <strong className="text-foreground">Explanation:</strong> {q.explanation}
+                                  <strong className="text-foreground">
+                                    Explanation:
+                                  </strong>{" "}
+                                  {q.explanation}
                                 </div>
                               )}
                             </div>
@@ -190,9 +215,12 @@ export default function StudentQuizResultModal({
                   ) : (
                     <div className="flex flex-col items-center justify-center py-8 px-4 border border-dashed border-border rounded-xl bg-muted/20 text-center gap-2">
                       <AlertCircle className="h-8 w-8 text-muted-foreground/60 animate-pulse" />
-                      <p className="text-sm font-semibold text-foreground">Detailed Review Locked</p>
+                      <p className="text-sm font-semibold text-foreground">
+                        Detailed Review Locked
+                      </p>
                       <p className="text-xs text-muted-foreground max-w-sm leading-normal">
-                        Detailed question-by-question review is not available yet because results have not been released by the admin.
+                        Detailed question-by-question review is not available
+                        yet because results have not been released by the admin.
                       </p>
                     </div>
                   )}
@@ -200,7 +228,9 @@ export default function StudentQuizResultModal({
               ) : (
                 <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
                   <AlertCircle className="h-10 w-10 text-muted-foreground" />
-                  <p className="font-semibold text-foreground">No attempt data available</p>
+                  <p className="font-semibold text-foreground">
+                    No attempt data available
+                  </p>
                 </div>
               )}
             </div>

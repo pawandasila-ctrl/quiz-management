@@ -8,7 +8,7 @@ from schemas.quiz import (
     CategoryCreate, CategoryResponse, QuizCreate, QuizUpdate, QuizResponse,
     QuizFullResponse, QuestionCreate, QuestionResponse, OptionCreate, OptionResponse
 )
-from schemas.result import EnrollmentCreate, EnrollmentResponse, QuizAttemptResponse, LeaderboardEntry
+from schemas.result import EnrollmentCreate, EnrollmentResponse, QuizAttemptResponse, LeaderboardEntry, AdminQuizAttemptResponse
 from controllers import quiz as quiz_controller
 from controllers import result as result_controller
 from controllers import users as user_controller
@@ -175,7 +175,7 @@ async def enroll_student(id: int, enroll_in: EnrollmentCreate, db: AsyncSession 
 async def get_enrollments(id: int, db: AsyncSession = Depends(get_db)):
     return await result_controller.get_enrollments(db, id)
 
-@router.get("/quiz/{id}/attempts", response_model=List[QuizAttemptResponse])
+@router.get("/quiz/{id}/attempts", response_model=List[AdminQuizAttemptResponse])
 async def get_quiz_attempts(id: int, db: AsyncSession = Depends(get_db)):
     return await result_controller.get_quiz_attempts(db, id)
 
