@@ -41,4 +41,10 @@ export const sidebarConfig: SidebarItem[] = [
     icon: BookOpen,
     roles: ["student"],
   },
+  {
+    title: "My Quizzes",
+    url: "/dashboard/my-quizzes",
+    icon: FolderOpen,
+    roles: ["student"],
+  },
 ];

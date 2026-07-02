@@ -50,6 +50,13 @@ export default function StudentQuizCard({
     quiz.max_attempts === 0 || attemptsCount < quiz.max_attempts;
 
   const gradedAttempts = quizAttempts.filter((a) => a.status === "graded");
+  const latestGradedAttempt =
+    gradedAttempts.length > 0
+      ? gradedAttempts.reduce((latest, current) =>
+          current.attempt_number > latest.attempt_number ? current : latest,
+          gradedAttempts[0],
+        )
+      : null;
   const highestScore =
     gradedAttempts.length > 0
       ? Math.max(...gradedAttempts.map((a) => a.score || 0))
@@ -131,36 +138,16 @@ export default function StudentQuizCard({
           >
             Continue Attempt
           </Button>
-        ) : hasRemainingAttempts ? (
+        ) : quiz.results_visible && latestGradedAttempt ? (
           <Button
+            variant="outline"
             onClick={() =>
-              startQuizMutation.mutate(quiz.id, {
-                onSuccess: () => {
-                  toast.success("Attempt started!");
-                  router.push(`/dashboard/quiz/${quiz.id}`);
-                },
-                onError: (err) => {
-                  toast.error(err.message || "Failed to start quiz attempt.");
-                },
-              })
+              router.push(`/dashboard/quiz/${quiz.id}/attempt/${latestGradedAttempt.id}`)
             }
-            className="w-full font-semibold text-xs h-8.5"
-            disabled={startQuizMutation.isPending}
+            className="w-full font-semibold text-xs h-8.5 gap-1.5 border-border hover:bg-accent"
           >
-            {startQuizMutation.isPending &&
-            startQuizMutation.variables === quiz.id ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Starting...
-              </span>
-            ) : attemptsCount > 0 ? (
-              <span className="flex items-center gap-1.5">
-                <RefreshCw className="h-3 w-3" />
-                Retake Quiz
-              </span>
-            ) : (
-              "Start Quiz"
-            )}
+            <FileText className="h-3.5 w-3.5" />
+            Review Latest Results
           </Button>
         ) : (
           <Link

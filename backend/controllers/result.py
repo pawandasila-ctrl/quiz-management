@@ -183,12 +183,10 @@ async def grade_and_finalize_attempt(db: AsyncSession, attempt_id: int) -> QuizA
     quiz = attempt.quiz
     now = datetime.now(timezone.utc)
 
-    
     query_q = select(Question).options(selectinload(Question.options)).filter(Question.quiz_id == quiz.id)
     q_res = await db.execute(query_q)
     questions = q_res.scalars().all()
 
-    
     correct_map = {}
     for q in questions:
         correct_opt = next((opt for opt in q.options if opt.is_correct), None)
@@ -197,7 +195,6 @@ async def grade_and_finalize_attempt(db: AsyncSession, attempt_id: int) -> QuizA
             "marks": q.marks
         }
 
-    
     total_score = 0
     for ans in attempt.answers:
         q_info = correct_map.get(ans.question_id)
@@ -233,8 +230,8 @@ async def grade_and_finalize_attempt(db: AsyncSession, attempt_id: int) -> QuizA
 async def get_attempt_result(db: AsyncSession, attempt_id: int, user: User) -> QuizAttempt:
     query = select(QuizAttempt).options(
         selectinload(QuizAttempt.student),
-        selectinload(QuizAttempt.quiz),
-        selectinload(QuizAttempt.answers).selectinload(Answer.question).selectinload(Question.options),
+        selectinload(QuizAttempt.quiz).selectinload(Quiz.category),
+        selectinload(QuizAttempt.answers).joinedload(Answer.question).selectinload(Question.options),
         selectinload(QuizAttempt.answers).selectinload(Answer.selected_option)
     ).filter(QuizAttempt.id == attempt_id)
 
@@ -243,18 +240,18 @@ async def get_attempt_result(db: AsyncSession, attempt_id: int, user: User) -> Q
     if not attempt:
         raise AttemptNotFoundError()
 
-    
     if user.role != UserRole.ADMIN and attempt.student_id != user.id:
         raise AttemptNotFoundError()
 
-    
     if user.role == UserRole.STUDENT and not attempt.quiz.results_visible:
         raise QuizStatusError("Quiz results are not released by the admin yet.")
 
     return attempt
 
 async def get_student_attempts(db: AsyncSession, student_id: int) -> list[QuizAttempt]:
-    query = select(QuizAttempt).options(selectinload(QuizAttempt.quiz)).filter(QuizAttempt.student_id == student_id)
+    query = select(QuizAttempt).options(
+        selectinload(QuizAttempt.quiz).selectinload(Quiz.category)
+    ).filter(QuizAttempt.student_id == student_id)
     result = await db.execute(query)
     return result.scalars().all()
 

@@ -2,7 +2,6 @@
 
 import React from "react";
 import {
-  useStudentQuizDetails,
   useAdminQuizDetails,
   useQuizAttemptResult,
 } from "@/models/quiz/hooks";
@@ -22,25 +21,20 @@ export default function AttemptReviewContainerClient({
   attemptId,
   isAdmin = false,
 }: AttemptReviewContainerClientProps) {
-  const { data: studentQuiz, isLoading: isStudentQuizLoading } =
-    useStudentQuizDetails(isAdmin ? NaN : quizId);
   const { data: adminQuiz, isLoading: isAdminQuizLoading } =
     useAdminQuizDetails(isAdmin ? quizId : NaN);
-
-  const quiz = isAdmin ? adminQuiz : studentQuiz;
-  const isQuizLoading = isAdmin ? isAdminQuizLoading : isStudentQuizLoading;
 
   const {
     data: attempt,
     isLoading: isAttemptLoading,
     error,
   } = useQuizAttemptResult(attemptId, {
-    enabled:
-      !isNaN(attemptId) &&
-      attemptId > 0 &&
-      (isAdmin || !!quiz?.results_visible),
+    enabled: !isNaN(attemptId) && attemptId > 0,
   });
 
+  
+  const quiz = isAdmin ? adminQuiz : attempt?.quiz;
+  const isQuizLoading = isAdmin ? isAdminQuizLoading : false;
   const isLoading = isQuizLoading || isAttemptLoading;
 
   if (isLoading) {
@@ -54,11 +48,13 @@ export default function AttemptReviewContainerClient({
     );
   }
 
-  if (!quiz) {
+  if (!quiz || !attempt) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3 text-center text-destructive">
         <AlertCircle className="h-10 w-10" />
-        <p className="font-semibold">Quiz not found</p>
+        <p className="font-semibold">
+          {!quiz ? "Quiz not found" : "Attempt data not found"}
+        </p>
       </div>
     );
   }
@@ -77,11 +73,11 @@ export default function AttemptReviewContainerClient({
               back later.
             </p>
           </div>
-        ) : error || !attempt ? (
+        ) : error ? (
           <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
             <AlertCircle className="h-10 w-10 text-muted-foreground" />
             <p className="font-semibold text-foreground">
-              No attempt data available
+              Failed to load attempt data
             </p>
           </div>
         ) : (
@@ -102,3 +98,4 @@ export default function AttemptReviewContainerClient({
     </Card>
   );
 }
+

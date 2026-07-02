@@ -3,7 +3,7 @@ from typing import Optional, List
 from datetime import datetime
 from models.result import AttemptStatus
 from schemas.user import UserResponse
-from schemas.quiz import OptionResponse, QuestionResponse
+from schemas.quiz import OptionResponse, QuestionResponse, QuizResponse
 
 # ── Enrollment Schemas ───────────────────────────────────────────────────────
 class EnrollmentCreate(BaseModel):
@@ -58,6 +58,7 @@ class QuizAttemptResponse(BaseModel):
     started_at: datetime
     submitted_at: Optional[datetime] = None
     graded_at: Optional[datetime] = None
+    quiz: Optional["QuizResponse"] = None
     model_config = ConfigDict(from_attributes=True)
 
 class QuizAttemptDetailResponse(QuizAttemptResponse):

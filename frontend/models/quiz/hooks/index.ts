@@ -207,6 +207,7 @@ export function useReleaseResults() {
       queryClient.invalidateQueries({ queryKey: ["admin-quizzes"] });
       queryClient.invalidateQueries({ queryKey: ["admin-quiz-details", quizId] });
       queryClient.invalidateQueries({ queryKey: ["student-quizzes"] });
+      queryClient.invalidateQueries({ queryKey: ["student-attempts"] });
     },
   });
 }

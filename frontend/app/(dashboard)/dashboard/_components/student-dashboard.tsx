@@ -1,8 +1,10 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useStudentQuizzes, useStudentAttempts } from "@/models/quiz/hooks";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, ClipboardCheck } from "lucide-react";
 import StudentQuizCard from "@/models/quiz/components/student-quiz-card";
 
@@ -36,13 +38,20 @@ export default function StudentDashboard() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-2">
-        <h2 className="text-2xl font-bold tracking-tight text-foreground">
-          Welcome to the Quiz Portal
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Browse through the published quizzes, view your previous logs, and test your knowledge.
-        </p>
+      <div className="flex flex-col gap-4">
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+            Welcome to the Quiz Portal
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Browse through the published quizzes, view your previous logs, and test your knowledge.
+          </p>
+        </div>
+        <div>
+          <Link href="/dashboard/my-quizzes">
+            <Button size="sm">View My Quizzes</Button>
+          </Link>
+        </div>
       </div>
 
       {!quizzes || quizzes.length === 0 ? (
