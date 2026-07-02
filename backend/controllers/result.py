@@ -216,7 +216,11 @@ async def grade_and_finalize_attempt(db: AsyncSession, attempt_id: int) -> QuizA
 
     attempt.status = AttemptStatus.GRADED
     attempt.score = total_score
-    attempt.passed = total_score >= quiz.pass_mark
+    if quiz.total_marks > 0:
+        student_percentage = (total_score / quiz.total_marks) * 100
+        attempt.passed = student_percentage >= quiz.pass_mark
+    else:
+        attempt.passed = True
     attempt.submitted_at = now
     attempt.graded_at = now
     attempt.time_taken_seconds = max(0, time_taken)

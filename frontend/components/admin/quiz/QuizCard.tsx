@@ -139,7 +139,7 @@ export default function QuizCard({ quiz }: QuizCardProps) {
             <Star className="h-3.5 w-3.5" />
           </div>
           <span className="text-sm font-bold text-foreground">
-            {quiz.pass_mark}
+            {quiz.pass_mark}%
           </span>
           <span className="text-[10px] text-muted-foreground leading-none">
             pass mark

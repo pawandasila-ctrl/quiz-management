@@ -150,16 +150,17 @@ export default function CreateQuizModal({ categories, onClose }: CreateQuizModal
             {/* Pass Mark + Max Attempts */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="quiz-pass">Pass Mark</Label>
+                <Label htmlFor="quiz-pass">Pass Mark (%)</Label>
                 <Input
                   id="quiz-pass"
                   type="number"
                   min={0}
+                  max={100}
                   value={passMark}
                   onChange={(e) => setPassMark(Number(e.target.value))}
                 />
                 <p className="text-[10px] text-muted-foreground leading-normal mt-0.5">
-                  Absolute score required to pass (not a percentage).
+                  Percentage of total marks required to pass (e.g. 50).
                 </p>
               </div>
               <div className="space-y-1.5">

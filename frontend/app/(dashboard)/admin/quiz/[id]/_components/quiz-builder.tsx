@@ -251,7 +251,7 @@ export default function QuizBuilder({ quizId }: QuizBuilderProps) {
               <div>
                 <p className="text-xs text-muted-foreground">Pass Mark</p>
                 <p className="text-sm font-bold text-foreground">
-                  {quiz.pass_mark}
+                  {quiz.pass_mark}%
                 </p>
               </div>
             </div>
