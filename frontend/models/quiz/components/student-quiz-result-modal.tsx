@@ -37,7 +37,9 @@ export default function StudentQuizResultModal({
   fallbackAttempt,
 }: StudentQuizResultModalProps) {
   // Fetch attempt result (which requires results_visible to be true in backend)
-  const { data: attempt, isLoading } = useQuizAttemptResult(attemptId);
+  const { data: attempt, isLoading } = useQuizAttemptResult(attemptId, {
+    enabled: quiz.results_visible && !isNaN(attemptId) && attemptId > 0,
+  });
 
   // Fallback to basic stats if results_visible is false
   const activeAttempt = attempt || fallbackAttempt;

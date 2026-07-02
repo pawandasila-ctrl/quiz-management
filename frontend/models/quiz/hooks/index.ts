@@ -96,11 +96,12 @@ export function useQuizLeaderboard(quizId: number) {
   });
 }
 
-export function useQuizAttemptResult(attemptId: number) {
+export function useQuizAttemptResult(attemptId: number, options?: { enabled?: boolean }) {
   return useQuery<QuizAttempt, Error>({
     queryKey: ["quiz-attempt-result", attemptId],
     queryFn: () => getAttemptResultRequest(attemptId),
-    enabled: !isNaN(attemptId) && attemptId > 0,
+    enabled: options?.enabled !== undefined ? options.enabled : (!isNaN(attemptId) && attemptId > 0),
+    retry: false,
   });
 }
 
