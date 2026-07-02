@@ -5,7 +5,6 @@ import { useAdminQuizDetails, useQuizAttemptResult } from "@/models/quiz/hooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Loader2,
   Trophy,
@@ -29,9 +28,12 @@ export default function AdminAttemptReviewPage({ params }: PageProps) {
   const router = useRouter();
 
   const { data: quiz, isLoading: isQuizLoading } = useAdminQuizDetails(quizId);
-  
-  // Fetch attempt result (admin bypasses results_visible, so enabled is true)
-  const { data: attempt, isLoading: isAttemptLoading, error } = useQuizAttemptResult(attemptId, {
+
+  const {
+    data: attempt,
+    isLoading: isAttemptLoading,
+    error,
+  } = useQuizAttemptResult(attemptId, {
     enabled: !isNaN(attemptId) && attemptId > 0,
   });
 
@@ -90,7 +92,9 @@ export default function AdminAttemptReviewPage({ params }: PageProps) {
               Submission Review - {quiz.title}
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-              Reviewing answers submitted by <strong className="text-foreground">{studentName}</strong> ({studentEmail})
+              Reviewing answers submitted by{" "}
+              <strong className="text-foreground">{studentName}</strong> (
+              {studentEmail})
             </p>
           </div>
         </CardHeader>
@@ -99,29 +103,41 @@ export default function AdminAttemptReviewPage({ params }: PageProps) {
           {error || !attempt ? (
             <div className="flex flex-col items-center justify-center py-10 gap-3 text-center">
               <AlertCircle className="h-10 w-10 text-muted-foreground" />
-              <p className="font-semibold text-foreground">No attempt data available</p>
+              <p className="font-semibold text-foreground">
+                No attempt data available
+              </p>
             </div>
           ) : (
             <div className="space-y-6">
               {/* Attempt Overview Cards */}
               <div className="grid grid-cols-3 gap-3 p-4 bg-muted/40 rounded-xl border border-border/80">
                 <div className="flex flex-col items-center justify-center text-center p-2">
-                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Score</span>
+                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    Score
+                  </span>
                   <span className="text-2xl font-bold mt-1 text-foreground">
                     {attempt.score ?? 0}
-                    <span className="text-xs text-muted-foreground font-normal"> / {quiz.total_marks}</span>
+                    <span className="text-xs text-muted-foreground font-normal">
+                      {" "}
+                      / {quiz.total_marks}
+                    </span>
                   </span>
                 </div>
 
                 <div className="flex flex-col items-center justify-center text-center p-2 border-x border-border/60">
-                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Result</span>
+                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    Result
+                  </span>
                   <div className="mt-1.5">
                     {attempt.passed ? (
                       <Badge className="bg-green-600 hover:bg-green-600 text-white gap-1 py-0.5 text-xs font-semibold">
                         <CheckCircle2 className="h-3 w-3" /> Passed
                       </Badge>
                     ) : (
-                      <Badge variant="destructive" className="gap-1 py-0.5 text-xs font-semibold">
+                      <Badge
+                        variant="destructive"
+                        className="gap-1 py-0.5 text-xs font-semibold"
+                      >
                         <XCircle className="h-3 w-3" /> Failed
                       </Badge>
                     )}
@@ -129,7 +145,9 @@ export default function AdminAttemptReviewPage({ params }: PageProps) {
                 </div>
 
                 <div className="flex flex-col items-center justify-center text-center p-2">
-                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Time Taken</span>
+                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                    Time Taken
+                  </span>
                   <span className="text-sm font-semibold mt-2 flex items-center gap-1 text-foreground">
                     <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                     {formatTime(attempt.time_taken_seconds)}
@@ -170,19 +188,22 @@ export default function AdminAttemptReviewPage({ params }: PageProps) {
                           </p>
 
                           <div className="grid gap-2 text-xs pt-1">
-                            {/* Selected Option */}
-                            <div className={`p-2.5 rounded-lg border flex items-center gap-2 ${
-                              ans.is_correct
-                                ? "bg-green-50/50 border-green-200 text-green-800"
-                                : "bg-red-50/50 border-red-200 text-red-800"
-                            }`}>
+                            <div
+                              className={`p-2.5 rounded-lg border flex items-center gap-2 ${
+                                ans.is_correct
+                                  ? "bg-green-50/50 border-green-200 text-green-800"
+                                  : "bg-red-50/50 border-red-200 text-red-800"
+                              }`}
+                            >
                               {ans.is_correct ? (
                                 <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
                               ) : (
                                 <XCircle className="h-4 w-4 text-red-600 shrink-0" />
                               )}
                               <span>
-                                <strong>Student's Answer:</strong> {ans.selected_option?.text || "No option selected"}
+                                <strong>Student&apos;s Answer:</strong>{" "}
+                                {ans.selected_option?.text ||
+                                  "No option selected"}
                               </span>
                             </div>
 
@@ -191,7 +212,8 @@ export default function AdminAttemptReviewPage({ params }: PageProps) {
                               <div className="p-2.5 rounded-lg border border-green-150 bg-green-50/20 text-green-800 flex items-center gap-2">
                                 <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
                                 <span>
-                                  <strong>Correct Answer:</strong> {correctOpt.text}
+                                  <strong>Correct Answer:</strong>{" "}
+                                  {correctOpt.text}
                                 </span>
                               </div>
                             )}
@@ -200,7 +222,10 @@ export default function AdminAttemptReviewPage({ params }: PageProps) {
                           {/* Explanation */}
                           {q.explanation && (
                             <div className="p-3 bg-muted/40 rounded-lg text-xs text-muted-foreground border border-border/60">
-                              <strong className="text-foreground">Explanation:</strong> {q.explanation}
+                              <strong className="text-foreground">
+                                Explanation:
+                              </strong>{" "}
+                              {q.explanation}
                             </div>
                           )}
                         </div>
