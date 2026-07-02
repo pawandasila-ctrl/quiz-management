@@ -27,6 +27,7 @@ import {
   XCircle,
   Trophy,
   AlertTriangle,
+  AlertCircle,
   ClipboardList,
   Save,
 } from "lucide-react";
@@ -204,70 +205,101 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
         <Card className="border-border shadow-sm text-center">
           <CardHeader className="space-y-2">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Trophy className="h-8 w-8 text-yellow-500" />
+              {quiz.results_visible ? (
+                <Trophy className="h-8 w-8 text-yellow-500" />
+              ) : (
+                <CheckCircle2 className="h-8 w-8 text-green-600" />
+              )}
             </div>
             <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
-              Quiz Completed!
+              {quiz.results_visible ? "Quiz Completed!" : "Answers Submitted!"}
             </CardTitle>
             <CardDescription>
-              Review your grade and status for <strong>{quiz.title}</strong>
+              {quiz.results_visible ? (
+                <>
+                  Review your grade and status for <strong>{quiz.title}</strong>
+                </>
+              ) : (
+                <>
+                  Your answers for <strong>{quiz.title}</strong> have been saved
+                  successfully.
+                </>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="p-6 bg-muted/30 rounded-xl grid grid-cols-2 gap-4 border border-border">
-              <div className="flex flex-col items-center justify-center border-r border-border">
-                <span className="text-sm text-muted-foreground">
-                  Your Score
-                </span>
-                <span className="text-4xl font-extrabold text-foreground mt-1">
-                  {score}{" "}
-                  <span className="text-lg text-muted-foreground">
-                    / {quiz.total_marks}
-                  </span>
-                </span>
-              </div>
-              <div className="flex flex-col items-center justify-center">
-                <span className="text-sm text-muted-foreground">Status</span>
-                <div className="mt-2">
-                  {passed ? (
-                    <Badge
-                      variant="default"
-                      className="bg-green-600 hover:bg-green-600 text-white font-semibold text-sm px-3 py-1 flex items-center gap-1.5"
-                    >
-                      <CheckCircle2 className="h-4 w-4" /> Passed
-                    </Badge>
-                  ) : (
-                    <Badge
-                      variant="destructive"
-                      className="font-semibold text-sm px-3 py-1 flex items-center gap-1.5"
-                    >
-                      <XCircle className="h-4 w-4" /> Failed
-                    </Badge>
+            {quiz.results_visible ? (
+              <>
+                <div className="p-6 bg-muted/30 rounded-xl grid grid-cols-2 gap-4 border border-border">
+                  <div className="flex flex-col items-center justify-center border-r border-border">
+                    <span className="text-sm text-muted-foreground">
+                      Your Score
+                    </span>
+                    <span className="text-4xl font-extrabold text-foreground mt-1">
+                      {score}{" "}
+                      <span className="text-lg text-muted-foreground">
+                        / {quiz.total_marks}
+                      </span>
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center">
+                    <span className="text-sm text-muted-foreground">
+                      Status
+                    </span>
+                    <div className="mt-2">
+                      {passed ? (
+                        <Badge
+                          variant="default"
+                          className="bg-green-600 hover:bg-green-600 text-white font-semibold text-sm px-3 py-1 flex items-center gap-1.5"
+                        >
+                          <CheckCircle2 className="h-4 w-4" /> Passed
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="destructive"
+                          className="font-semibold text-sm px-3 py-1 flex items-center gap-1.5"
+                        >
+                          <XCircle className="h-4 w-4" /> Failed
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-sm text-muted-foreground text-left p-4 border border-border bg-accent/20 rounded-lg">
+                  <h4 className="font-semibold text-foreground mb-1">
+                    Score Breakdown
+                  </h4>
+                  <p>
+                    Passing Mark:{" "}
+                    <span className="font-semibold text-foreground">
+                      {quiz.pass_mark}
+                    </span>
+                  </p>
+                  {attempt.time_taken_seconds !== null && (
+                    <p>
+                      Time Taken:{" "}
+                      <span className="font-semibold text-foreground">
+                        {Math.floor(attempt.time_taken_seconds / 60)}m{" "}
+                        {attempt.time_taken_seconds % 60}s
+                      </span>
+                    </p>
                   )}
                 </div>
-              </div>
-            </div>
-
-            <div className="text-sm text-muted-foreground text-left p-4 border border-border bg-accent/20 rounded-lg">
-              <h4 className="font-semibold text-foreground mb-1">
-                Score Breakdown
-              </h4>
-              <p>
-                Passing Mark:{" "}
-                <span className="font-semibold text-foreground">
-                  {quiz.pass_mark}
-                </span>
-              </p>
-              {attempt.time_taken_seconds !== null && (
-                <p>
-                  Time Taken:{" "}
-                  <span className="font-semibold text-foreground">
-                    {Math.floor(attempt.time_taken_seconds / 60)}m{" "}
-                    {attempt.time_taken_seconds % 60}s
-                  </span>
+              </>
+            ) : (
+              <div className="p-6 border border-dashed border-border rounded-xl bg-muted/20 text-center flex flex-col items-center gap-2">
+                <AlertCircle className="h-8 w-8 text-muted-foreground/60 animate-pulse" />
+                <p className="text-sm font-semibold text-foreground">
+                  Results Locked
                 </p>
-              )}
-            </div>
+                <p className="text-xs text-muted-foreground max-w-sm leading-normal">
+                  Results have not been released by the admin yet. You will be
+                  able to review your grade and answers once the administrator
+                  releases them.
+                </p>
+              </div>
+            )}
           </CardContent>
           <CardFooter className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-border">
             <Button

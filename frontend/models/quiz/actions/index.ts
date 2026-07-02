@@ -44,6 +44,11 @@ export async function getQuizLeaderboardRequest(quizId: number): Promise<Leaderb
   return res.data;
 }
 
+export async function getAttemptResultRequest(attemptId: number): Promise<QuizAttempt> {
+  const res = await axiosClient.get<QuizAttempt>(`/student/attempt/${attemptId}/result`);
+  return res.data;
+}
+
 // ── Admin Actions ───────────────────────────────────────────────────────────
 
 export async function getAdminQuizzesRequest(): Promise<Quiz[]> {

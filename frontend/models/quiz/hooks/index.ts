@@ -7,6 +7,7 @@ import {
   submitAnswerRequest,
   finalizeAttemptRequest,
   getQuizLeaderboardRequest,
+  getAttemptResultRequest,
   getAdminQuizzesRequest,
   getAdminQuizDetailsRequest,
   getAdminCategoriesRequest,
@@ -92,6 +93,14 @@ export function useQuizLeaderboard(quizId: number) {
     queryKey: ["quiz-leaderboard", quizId],
     queryFn: () => getQuizLeaderboardRequest(quizId),
     enabled: !isNaN(quizId),
+  });
+}
+
+export function useQuizAttemptResult(attemptId: number) {
+  return useQuery<QuizAttempt, Error>({
+    queryKey: ["quiz-attempt-result", attemptId],
+    queryFn: () => getAttemptResultRequest(attemptId),
+    enabled: !isNaN(attemptId) && attemptId > 0,
   });
 }
 
