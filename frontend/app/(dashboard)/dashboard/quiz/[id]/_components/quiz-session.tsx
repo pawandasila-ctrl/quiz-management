@@ -462,6 +462,8 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
         onConfirm={handleManualSubmit}
         confirmText="Submit"
         variant="default"
+        isLoading={finalizeQuizMutation.isPending || isSubmittingManual}
+        loadingText="Submitting..."
       />
     </div>
   );

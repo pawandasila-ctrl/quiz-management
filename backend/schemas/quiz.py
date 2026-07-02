@@ -115,6 +115,7 @@ class QuizStudentResponse(BaseModel):
     description: Optional[str] = None
     category_id: Optional[int] = None
     time_limit_minutes: Optional[int] = None
+    pass_mark: int
     max_attempts: int
     total_marks: int
     category: Optional[CategoryResponse] = None

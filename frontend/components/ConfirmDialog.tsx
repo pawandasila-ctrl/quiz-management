@@ -30,6 +30,7 @@ interface ConfirmDialogProps {
     | "link";
   trigger?: React.ReactNode;
   isLoading?: boolean;
+  loadingText?: string;
 }
 
 export default function ConfirmDialog({
@@ -43,6 +44,7 @@ export default function ConfirmDialog({
   variant = "destructive",
   trigger,
   isLoading = false,
+  loadingText = "Deleting...",
 }: ConfirmDialogProps) {
   const [uncontrolledIsOpen, setUncontrolledIsOpen] = useState(false);
 
@@ -96,7 +98,7 @@ export default function ConfirmDialog({
             className="min-w-[80px]"
           >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isLoading ? "Deleting..." : confirmText}
+            {isLoading ? loadingText : confirmText}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

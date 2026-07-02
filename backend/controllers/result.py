@@ -54,13 +54,11 @@ async def get_enrollments(db: AsyncSession, quiz_id: int) -> list[Enrollment]:
 
 
 async def start_attempt(db: AsyncSession, quiz_id: int, student: User) -> QuizAttempt:
-    
     query_quiz = select(Quiz).filter(Quiz.id == quiz_id)
     quiz_res = await db.execute(query_quiz)
     quiz = quiz_res.scalars().first()
     if not quiz or quiz.status != QuizStatus.PUBLISHED:
         raise QuizNotFoundError("Quiz not found or not currently available.")
-
     
     enroll_query = select(Enrollment).filter(Enrollment.quiz_id == quiz_id)
     enroll_res = await db.execute(enroll_query)
