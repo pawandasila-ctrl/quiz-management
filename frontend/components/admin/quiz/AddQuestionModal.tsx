@@ -145,7 +145,6 @@ export default function AddQuestionModal({
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Question text */}
             <div className="space-y-1.5">
               <Label htmlFor="q-text">
                 Question Text <span className="text-destructive">*</span>
@@ -161,7 +160,6 @@ export default function AddQuestionModal({
               />
             </div>
 
-            {/* Type / Marks / Order */}
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="q-type">Question Type</Label>
@@ -200,7 +198,6 @@ export default function AddQuestionModal({
               </div>
             </div>
 
-            {/* Image URL */}
             <div className="space-y-1.5">
               <Label htmlFor="q-img" className="flex items-center gap-1">
                 <ImageIcon className="h-3.5 w-3.5" /> Image URL (optional)
@@ -213,7 +210,6 @@ export default function AddQuestionModal({
               />
             </div>
 
-            {/* Explanation */}
             <div className="space-y-1.5">
               <Label htmlFor="q-exp">Explanation (optional)</Label>
               <Textarea

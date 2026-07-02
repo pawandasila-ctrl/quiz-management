@@ -82,20 +82,19 @@ async def start_attempt(db: AsyncSession, quiz_id: int, student: User) -> QuizAt
     )
     attempts_res = await db.execute(query_attempts)
     past_attempts = attempts_res.scalars().all()
-    attempts_count = len(past_attempts)
 
-    if quiz.max_attempts is not None and attempts_count >= quiz.max_attempts:
-        raise MaxAttemptsReachedError()
-
-    
     for attempt in past_attempts:
         if attempt.status == AttemptStatus.IN_PROGRESS:
             started_at = attempt.started_at.replace(tzinfo=timezone.utc) if attempt.started_at.tzinfo is None else attempt.started_at
             if quiz.time_limit_minutes and datetime.now(timezone.utc) > started_at + timedelta(minutes=quiz.time_limit_minutes):
-                
                 await grade_and_finalize_attempt(db, attempt.id)
+                attempt.status = AttemptStatus.SUBMITTED
             else:
-                return attempt  
+                return attempt 
+
+    attempts_count = len(past_attempts)
+    if quiz.max_attempts is not None and attempts_count >= quiz.max_attempts:
+        raise MaxAttemptsReachedError()
 
     new_attempt = QuizAttempt(
         quiz_id=quiz_id,
