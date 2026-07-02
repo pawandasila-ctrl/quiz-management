@@ -23,7 +23,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import AdminAttemptsModal from "./AdminAttemptsModal";
 
 interface QuizCardProps {
   quiz: Quiz;
@@ -54,7 +53,6 @@ export default function QuizCard({ quiz }: QuizCardProps) {
   const publishMutation = usePublishQuiz();
   const closeMutation = useCloseQuiz();
   const releaseResultsMutation = useReleaseResults();
-  const [showAttempts, setShowAttempts] = useState(false);
 
   const statusCfg = useMemo(() => STATUS_CONFIG[quiz.status], [quiz.status]);
 
@@ -157,15 +155,13 @@ export default function QuizCard({ quiz }: QuizCardProps) {
         </Link>
 
         {quiz.status !== "draft" && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setShowAttempts(true)}
-            className="h-8 gap-1.5 text-xs border-border hover:bg-accent"
+          <Link
+            href={`/admin/quiz/${quiz.id}/submissions`}
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground shadow-sm hover:bg-accent transition-colors"
           >
             <Users className="h-3.5 w-3.5 text-muted-foreground" />
             Submissions
-          </Button>
+          </Link>
         )}
 
         {quiz.status === "draft" && (
@@ -216,13 +212,6 @@ export default function QuizCard({ quiz }: QuizCardProps) {
           </Link>
         )}
       </div>
-
-      {showAttempts && (
-        <AdminAttemptsModal
-          quiz={quiz}
-          onClose={() => setShowAttempts(false)}
-        />
-      )}
     </div>
   );
 }

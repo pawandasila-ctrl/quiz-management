@@ -63,7 +63,7 @@ class QuizAttemptResponse(BaseModel):
 class QuizAttemptDetailResponse(QuizAttemptResponse):
     """Includes student profile and lists of submitted answers."""
     student: UserResponse
-    answers: List[AnswerResponse] = []
+    answers: List[AnswerDetailResponse] = []
     model_config = ConfigDict(from_attributes=True)
 
 class AdminQuizAttemptResponse(QuizAttemptResponse):
