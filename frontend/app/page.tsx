@@ -1,34 +1,18 @@
-"use client";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-import { useEffect } from "react";
-import { useAuth } from "@/lib/auth-context";
-import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+export default async function RootPage() {
+  const cookieStore = await cookies();
+  const hasSession = cookieStore.get("has_session")?.value;
+  const role = cookieStore.get("role")?.value;
 
-export default function RootPage() {
-  const { isAuthenticated, role, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!loading) {
-      if (isAuthenticated) {
-        if (role === "admin") {
-          router.replace("/admin");
-        } else {
-          router.replace("/dashboard");
-        }
-      } else {
-        router.replace("/login");
-      }
+  if (hasSession === "true") {
+    if (role === "admin") {
+      redirect("/admin");
+    } else {
+      redirect("/dashboard");
     }
-  }, [isAuthenticated, role, loading, router]);
-
-  return (
-    <div className="flex items-center justify-center flex-1 min-h-screen bg-background">
-      <div className="flex flex-col items-center gap-2">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-sm font-medium text-muted-foreground">Loading your workspace...</p>
-      </div>
-    </div>
-  );
+  } else {
+    redirect("/login");
+  }
 }

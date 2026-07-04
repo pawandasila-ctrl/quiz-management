@@ -4,7 +4,8 @@ import React from "react";
 import {
   useAdminQuizDetails,
   useQuizAttemptResult,
-} from "@/models/quiz/hooks";
+} from "@/modules/quiz/hooks";
+import { Answer } from "@/modules/quiz/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, AlertCircle } from "lucide-react";
 import ReviewScorecard from "./ReviewScorecard";
@@ -32,7 +33,6 @@ export default function AttemptReviewContainerClient({
     enabled: !isNaN(attemptId) && attemptId > 0,
   });
 
-  
   const quiz = isAdmin ? adminQuiz : attempt?.quiz;
   const isQuizLoading = isAdmin ? isAdminQuizLoading : false;
   const isLoading = isQuizLoading || isAttemptLoading;
@@ -89,7 +89,7 @@ export default function AttemptReviewContainerClient({
               timeTakenSeconds={attempt.time_taken_seconds}
             />
             <QuestionReviewList
-              answers={attempt.answers || []}
+              answers={(attempt.answers as Answer[] | undefined) || []}
               isAdmin={isAdmin}
             />
           </div>
@@ -98,4 +98,3 @@ export default function AttemptReviewContainerClient({
     </Card>
   );
 }
-

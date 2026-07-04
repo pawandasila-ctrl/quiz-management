@@ -1,15 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from config.database import get_db
 from config.security import require_role
 from models.user import UserRole, User
 from models.quiz import QuizStatus
 from schemas.quiz import QuizResponse, QuizStudentResponse
-from schemas.result import AnswerSubmit, AnswerResponse, QuizAttemptResponse, QuizAttemptDetailResponse, LeaderboardEntry
+from schemas.result import AnswerSubmit, AnswerStateResponse, QuizAttemptResponse, QuizAttemptDetailResponse, LeaderboardEntry
 from controllers import quiz as quiz_controller
 from controllers import result as result_controller
 from utils.exceptions import PracticeException
-from typing import List
+
 
 router = APIRouter(
     prefix="/student",
@@ -18,9 +19,12 @@ router = APIRouter(
 )
 
 @router.get("/quiz", response_model=List[QuizResponse])
-async def list_published_quizzes(db: AsyncSession = Depends(get_db)):
-    # Students can only see PUBLISHED quizzes
-    return await quiz_controller.get_all_quizzes(db, status=QuizStatus.PUBLISHED)
+async def list_published_quizzes(
+    limit: int = Query(50, ge=1, le=200, description="Max results to return"),
+    offset: int = Query(0, ge=0, description="Number of results to skip"),
+    db: AsyncSession = Depends(get_db)
+):
+    return await quiz_controller.get_all_quizzes(db, status=QuizStatus.PUBLISHED, limit=limit, offset=offset)
 
 @router.get("/quiz/{id}", response_model=QuizStudentResponse)
 async def get_quiz_student_view(id: int, db: AsyncSession = Depends(get_db)):
@@ -44,7 +48,7 @@ async def start_quiz_attempt(
     except PracticeException as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
-@router.post("/attempt/{id}/answer", response_model=AnswerResponse)
+@router.post("/attempt/{id}/answer", response_model=AnswerStateResponse)
 async def submit_question_answer(
     id: int,
     answer_in: AnswerSubmit,
@@ -80,9 +84,11 @@ async def view_attempt_result(
 @router.get("/attempts", response_model=List[QuizAttemptResponse])
 async def list_own_attempts(
     current_user: User = Depends(require_role([UserRole.STUDENT])),
+    limit: int = Query(50, ge=1, le=200, description="Max results to return"),
+    offset: int = Query(0, ge=0, description="Number of results to skip"),
     db: AsyncSession = Depends(get_db)
 ):
-    return await result_controller.get_student_attempts(db, current_user.id)
+    return await result_controller.get_student_attempts(db, current_user.id, limit=limit, offset=offset)
 
 @router.get("/quiz/{id}/leaderboard", response_model=List[LeaderboardEntry])
 async def get_quiz_leaderboard(

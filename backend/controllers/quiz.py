@@ -71,12 +71,19 @@ async def create_quiz(db: AsyncSession, quiz_in: QuizCreate, creator_id: int) ->
     await db.commit()
     return await get_quiz_by_id(db, new_quiz.id)
 
-async def get_all_quizzes(db: AsyncSession, category_id: int | None = None, status: QuizStatus | None = None) -> list[Quiz]:
+async def get_all_quizzes(
+    db: AsyncSession,
+    category_id: int | None = None,
+    status: QuizStatus | None = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> list[Quiz]:
     query = select(Quiz).options(selectinload(Quiz.category))
     if category_id is not None:
         query = query.filter(Quiz.category_id == category_id)
     if status is not None:
         query = query.filter(Quiz.status == status)
+    query = query.offset(offset).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()
 

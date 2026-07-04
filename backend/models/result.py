@@ -9,6 +9,13 @@ class AttemptStatus(str, enum.Enum):
     SUBMITTED = 'submitted'
     GRADED = 'graded'
 
+class AnswerStatus(str, enum.Enum):
+    NOT_VISITED = 'not_visited'
+    NOT_ANSWERED = 'not_answered'
+    ANSWERED = 'answered'
+    MARKED_FOR_REVIEW = 'marked_for_review'
+    ANSWERED_MARKED_FOR_REVIEW = 'answered_marked_for_review'
+
 class Enrollment(Base):
     __tablename__ = "enrollments"
 
@@ -52,7 +59,8 @@ class Answer(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     attempt_id = Column(Integer, ForeignKey("quiz_attempts.id", ondelete="CASCADE"), nullable=False, index=True)
     question_id = Column(Integer, ForeignKey("questions.id", ondelete="CASCADE"), nullable=False, index=True)
-    selected_option_id = Column(Integer, ForeignKey("options.id", ondelete="CASCADE"), nullable=False, index=True)
+    selected_option_id = Column(Integer, ForeignKey("options.id", ondelete="CASCADE"), nullable=True, index=True)
+    status = Column(Enum(AnswerStatus, name="answerstatus"), nullable=False, default=AnswerStatus.NOT_VISITED)
     is_correct = Column(Boolean, nullable=False, default=False)
     marks_awarded = Column(Integer, nullable=False, default=0)
     answered_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())

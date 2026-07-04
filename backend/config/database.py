@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.orm import declarative_base
 import asyncio
 import logging
+from pathlib import Path
 from sqlalchemy.exc import OperationalError
 
 
@@ -37,6 +38,8 @@ engine = create_async_engine(
     DATABASE_URL,
     echo=settings.ENVIRONMENT == "development",
     connect_args=connect_args,
+    pool_pre_ping=True,
+    pool_recycle=300,
 )
 
 SessionLocal = async_sessionmaker(
@@ -53,6 +56,28 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def _stamp_head_if_unversioned(sync_conn) -> None:
+    """
+    If this DB has never been touched by Alembic (no alembic_version row), stamp it at head
+    right after create_all() bootstraps a fresh schema -- so future `alembic upgrade` calls
+    don't try to replay history against a DB that's already at the latest shape.
+    Existing, already-versioned DBs are left untouched; run `alembic upgrade head` to apply
+    pending migrations to those (see Dockerfile / README).
+    """
+    from alembic.config import Config as AlembicConfig
+    from alembic.script import ScriptDirectory
+    from alembic.runtime.migration import MigrationContext
+
+    backend_dir = Path(__file__).resolve().parent.parent
+    alembic_cfg = AlembicConfig(str(backend_dir / "alembic.ini"))
+    alembic_cfg.set_main_option("script_location", str(backend_dir / "alembic"))
+    script = ScriptDirectory.from_config(alembic_cfg)
+
+    context = MigrationContext.configure(sync_conn)
+    if context.get_current_revision() is None:
+        context.stamp(script, "head")
+
+
 async def init_db():
     logger.info("Initializing database schemas...")
     retries = 15
@@ -60,6 +85,7 @@ async def init_db():
         try:
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
+                await conn.run_sync(_stamp_head_if_unversioned)
             logger.info("Database connection and schema creation successful.")
             return
         except (OperationalError, Exception) as e:
@@ -68,9 +94,10 @@ async def init_db():
             await asyncio.sleep(3)
             retries -= 1
 
-   
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(_stamp_head_if_unversioned)
 
 
 async def get_db():

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { sidebarConfig } from "./app/(dashboard)/_data/sidebar.data";
-import type { UserRole } from "./models/auth/types";
+import type { UserRole } from "./modules/auth/types";
 
 export function proxy(request: NextRequest) {
   const hasSession = request.cookies.get("has_session")?.value === "true";

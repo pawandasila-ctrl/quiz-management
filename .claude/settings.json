@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(venv/Scripts/python.exe -m alembic stamp head)",
+      "Bash(venv/Scripts/python.exe -m alembic revision --autogenerate -m \"add answer status tracking\")",
+      "Bash(venv/Scripts/python.exe -m alembic upgrade head)",
+      "Bash(venv/Scripts/python.exe -c ' *)",
+      "Bash(venv/Scripts/python.exe -m pytest -q)",
+      "Bash(netstat -ano)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://127.0.0.1:5001/api/health --max-time 5)",
+      "Skill(agent-browser)",
+      "Skill(agent-browser:*)",
+      "Bash(npx --yes playwright --version)",
+      "Bash(npx playwright *)",
+      "Read(//c/Users/admin/AppData/Local/Temp/claude/d--quiz/e8246476-c240-45e8-a6bd-e9e1662f8142/scratchpad/**)",
+      "Bash(npm init *)",
+      "Bash(npm install *)"
+    ]
+  }
+}

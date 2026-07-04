@@ -1,5 +1,5 @@
 import React from "react";
-import { Answer } from "@/models/quiz/types";
+import { Answer } from "@/modules/quiz/types";
 import { HelpCircle, CheckCircle2, XCircle } from "lucide-react";
 
 interface QuestionReviewListProps {

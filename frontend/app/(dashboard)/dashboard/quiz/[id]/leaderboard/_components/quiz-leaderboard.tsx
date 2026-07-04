@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useStudentQuizDetails, useQuizLeaderboard } from "@/models/quiz/hooks";
+import { useStudentQuizDetails, useQuizLeaderboard } from "@/modules/quiz/hooks";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

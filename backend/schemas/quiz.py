@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import Optional, List
 from datetime import datetime
 from models.quiz import QuizStatus, QuestionType
@@ -45,6 +45,15 @@ class QuestionBase(BaseModel):
     order: int = Field(0, description="Display order of question")
     explanation: Optional[str] = Field(None, description="Explanation of the correct answer")
     image_url: Optional[str] = Field(None, description="URL of question image attachment")
+
+    @field_validator("image_url")
+    @classmethod
+    def validate_image_url(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        if not v.startswith(("http://", "https://")):
+            raise ValueError("image_url must be a valid http or https URL")
+        return v
 
 class QuestionCreate(QuestionBase):
     options: Optional[List[OptionCreate]] = Field(None, description="Optional nested options list to create along with the question")

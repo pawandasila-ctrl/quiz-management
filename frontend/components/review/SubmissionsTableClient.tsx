@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useAdminQuizAttempts, useAdminQuizDetails } from "@/models/quiz/hooks";
+import { useAdminQuizAttempts, useAdminQuizDetails } from "@/modules/quiz/hooks";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {

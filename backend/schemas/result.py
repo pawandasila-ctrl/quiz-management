@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
 from datetime import datetime
-from models.result import AttemptStatus
+from models.result import AttemptStatus, AnswerStatus
 from schemas.user import UserResponse
 from schemas.quiz import OptionResponse, QuestionResponse, QuizResponse
 
@@ -20,28 +20,25 @@ class EnrollmentResponse(BaseModel):
 # ── Answer Submission Schemas ─────────────────────────────────────────────────
 class AnswerSubmit(BaseModel):
     question_id: int
-    selected_option_id: int
+    selected_option_id: Optional[int] = Field(None, description="null clears the current selection")
+    marked_for_review: bool = Field(False, description="Whether the student marked this question for review")
 
-class AnswerResponse(BaseModel):
-    id: int
-    attempt_id: int
+class AnswerStateResponse(BaseModel):
+    """Live in-progress answer state — deliberately excludes grading fields so the answer key never leaks mid-attempt."""
     question_id: int
-    selected_option_id: int
-    is_correct: bool
-    marks_awarded: int
-    answered_at: datetime
+    selected_option_id: Optional[int] = None
+    status: AnswerStatus
     model_config = ConfigDict(from_attributes=True)
 
 class AnswerDetailResponse(BaseModel):
     """Detailed answer containing the question text, option text, and correct status for review."""
     id: int
     question_id: int
-    selected_option_id: int
+    selected_option_id: Optional[int] = None
     is_correct: bool
     marks_awarded: int
-    # Allow nesting full details for post-exam review
     question: QuestionResponse
-    selected_option: OptionResponse
+    selected_option: Optional[OptionResponse] = None
     model_config = ConfigDict(from_attributes=True)
 
 # ── QuizAttempt Schemas ───────────────────────────────────────────────────────
@@ -59,6 +56,7 @@ class QuizAttemptResponse(BaseModel):
     submitted_at: Optional[datetime] = None
     graded_at: Optional[datetime] = None
     quiz: Optional["QuizResponse"] = None
+    answers: List[AnswerStateResponse] = []
     model_config = ConfigDict(from_attributes=True)
 
 class QuizAttemptDetailResponse(QuizAttemptResponse):

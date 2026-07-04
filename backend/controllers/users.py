@@ -17,11 +17,11 @@ async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
     result = await db.execute(query)
     return result.scalars().first()
 
-async def get_all_users(db: AsyncSession) -> list[User]:
+async def get_all_users(db: AsyncSession, limit: int = 50, offset: int = 0) -> list[User]:
     """
-    Retrieve all users.
+    Retrieve users with pagination.
     """
-    query = select(User)
+    query = select(User).offset(offset).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()
 

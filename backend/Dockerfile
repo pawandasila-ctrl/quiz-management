@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 
@@ -19,4 +19,4 @@ COPY . .
 
 EXPOSE 5001
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5001"]
+CMD alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 5001

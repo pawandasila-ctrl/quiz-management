@@ -1,14 +1,14 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { User, UserRole } from "@/models/auth/types";
+import { User, UserRole } from "@/modules/auth/types";
 import { useRouter } from "next/navigation";
 import {
   loginRequest,
   registerRequest,
   logoutRequest,
   getMeRequest,
-} from "@/models/auth/actions";
+} from "@/modules/auth/actions";
 
 interface AuthContextType {
   user: User | null;

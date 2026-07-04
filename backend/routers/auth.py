@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from config.database import get_db
 from config.settings import settings
+from config.limiter import limiter
 from config.security import verify_password, get_current_user, get_token_from_request
 from schemas.user import UserCreate, UserResponse, UserLogin, UserLoginResponse
 from controllers import users as user_controller
@@ -18,7 +19,9 @@ router = APIRouter(
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED
 )
+@limiter.limit("10/minute")
 async def register_student(
+    request: Request,
     user_in: UserCreate,
     db: AsyncSession = Depends(get_db)
 ):
@@ -36,7 +39,9 @@ async def register_student(
     response_model=UserLoginResponse,
     status_code=status.HTTP_200_OK
 )
+@limiter.limit("10/minute")
 async def login_user(
+    request: Request,
     user_in: UserLogin,
     response: Response,
     db: AsyncSession = Depends(get_db)

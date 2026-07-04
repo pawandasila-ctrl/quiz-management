@@ -1,4 +1,4 @@
-import { UserRole } from "@/models/auth/types";
+import { UserRole } from "@/modules/auth/types";
 import {
   LayoutDashboard,
   BookOpen,

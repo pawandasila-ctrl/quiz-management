@@ -15,6 +15,11 @@ from controllers import users as user_controller
 from utils.exceptions import PracticeException
 from utils.cloudinary import upload_image_bytes
 from typing import List
+import logging
+
+logger = logging.getLogger(__name__)
+
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 
 router = APIRouter(
     prefix="/admin",
@@ -28,21 +33,28 @@ async def upload_file(
 ):
     """
     Upload an image file asynchronously to Cloudinary.
-    Returns the secure URL.
+    Returns the secure URL. Maximum file size is 5 MB.
     """
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Uploaded file must be an image."
         )
+
+    file_bytes = await file.read(MAX_UPLOAD_BYTES + 1)
+    if len(file_bytes) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File too large. Maximum allowed size is 5 MB."
+        )
     try:
-        file_bytes = await file.read()
         secure_url = await upload_image_bytes(file_bytes)
         return {"secure_url": secure_url}
-    except Exception as e:
+    except Exception:
+        logger.exception("Cloudinary upload failed for file: %s", file.filename)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to upload image to Cloudinary: {str(e)}"
+            detail="Failed to upload image. Please try again later."
         )
 
 # ── Category Endpoints ───────────────────────────────────────────────────────
@@ -70,9 +82,11 @@ async def create_quiz(
 async def list_quizzes(
     category_id: int | None = Query(None),
     status: quiz_controller.QuizStatus | None = Query(None),
+    limit: int = Query(50, ge=1, le=200, description="Max results to return"),
+    offset: int = Query(0, ge=0, description="Number of results to skip"),
     db: AsyncSession = Depends(get_db)
 ):
-    return await quiz_controller.get_all_quizzes(db, category_id=category_id, status=status)
+    return await quiz_controller.get_all_quizzes(db, category_id=category_id, status=status, limit=limit, offset=offset)
 
 @router.get("/quiz/{id}", response_model=QuizFullResponse)
 async def get_quiz_details(id: int, db: AsyncSession = Depends(get_db)):
@@ -176,8 +190,13 @@ async def get_enrollments(id: int, db: AsyncSession = Depends(get_db)):
     return await result_controller.get_enrollments(db, id)
 
 @router.get("/quiz/{id}/attempts", response_model=List[AdminQuizAttemptResponse])
-async def get_quiz_attempts(id: int, db: AsyncSession = Depends(get_db)):
-    return await result_controller.get_quiz_attempts(db, id)
+async def get_quiz_attempts(
+    id: int,
+    limit: int = Query(50, ge=1, le=200, description="Max results to return"),
+    offset: int = Query(0, ge=0, description="Number of results to skip"),
+    db: AsyncSession = Depends(get_db)
+):
+    return await result_controller.get_quiz_attempts(db, id, limit=limit, offset=offset)
 
 @router.get("/quiz/{id}/leaderboard", response_model=List[LeaderboardEntry])
 async def get_quiz_leaderboard(
@@ -192,8 +211,12 @@ async def get_quiz_leaderboard(
 
 # ── User Management ──────────────────────────────────────────────────────────
 @router.get("/users", response_model=List[UserResponse])
-async def list_users(db: AsyncSession = Depends(get_db)):
-    return await user_controller.get_all_users(db)
+async def list_users(
+    limit: int = Query(50, ge=1, le=200, description="Max results to return"),
+    offset: int = Query(0, ge=0, description="Number of results to skip"),
+    db: AsyncSession = Depends(get_db)
+):
+    return await user_controller.get_all_users(db, limit=limit, offset=offset)
 
 @router.put("/users/{id}/role", response_model=UserResponse)
 async def promote_user(id: int, role: UserRole = Query(...), db: AsyncSession = Depends(get_db)):

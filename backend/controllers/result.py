@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload, joinedload
 from models.quiz import Quiz, Question, Option, QuizStatus
 from models.user import User, UserRole
-from models.result import Enrollment, QuizAttempt, Answer, AttemptStatus
+from models.result import Enrollment, QuizAttempt, Answer, AttemptStatus, AnswerStatus
 from schemas.result import EnrollmentCreate, AnswerSubmit, LeaderboardEntry
 from utils.exceptions import (
     QuizNotFoundError, QuizStatusError, UserNotFoundError,
@@ -13,21 +13,18 @@ from utils.exceptions import (
 from datetime import datetime, timezone, timedelta
 
 
-async def enroll_student(db: AsyncSession, quiz_id: int, enroll_in: EnrollmentCreate) -> Enrollment:
-    
+async def enroll_student(db: AsyncSession, quiz_id: int, enroll_in: EnrollmentCreate) -> Enrollment:    
     query_quiz = select(Quiz).filter(Quiz.id == quiz_id)
     quiz_res = await db.execute(query_quiz)
     quiz = quiz_res.scalars().first()
     if not quiz:
         raise QuizNotFoundError()
-
     
     query_student = select(User).filter(User.email == enroll_in.student_email, User.role == UserRole.STUDENT)
     student_res = await db.execute(query_student)
     student = student_res.scalars().first()
     if not student:
         raise UserNotFoundError("Student with this email address does not exist.")
-
     
     query_existing = select(Enrollment).filter(
         Enrollment.quiz_id == quiz_id,
@@ -54,7 +51,10 @@ async def get_enrollments(db: AsyncSession, quiz_id: int) -> list[Enrollment]:
 
 
 async def start_attempt(db: AsyncSession, quiz_id: int, student: User) -> QuizAttempt:
-    query_quiz = select(Quiz).filter(Quiz.id == quiz_id)
+    query_quiz = select(Quiz).options(
+        selectinload(Quiz.category),
+        selectinload(Quiz.questions)
+    ).filter(Quiz.id == quiz_id)
     quiz_res = await db.execute(query_quiz)
     quiz = quiz_res.scalars().first()
     if not quiz or quiz.status != QuizStatus.PUBLISHED:
@@ -74,7 +74,10 @@ async def start_attempt(db: AsyncSession, quiz_id: int, student: User) -> QuizAt
             raise EnrollmentRequiredError()
 
     
-    query_attempts = select(QuizAttempt).filter(
+    query_attempts = select(QuizAttempt).options(
+        joinedload(QuizAttempt.quiz).selectinload(Quiz.category),
+        selectinload(QuizAttempt.answers)
+    ).filter(
         QuizAttempt.quiz_id == quiz_id,
         QuizAttempt.student_id == student.id
     )
@@ -99,11 +102,17 @@ async def start_attempt(db: AsyncSession, quiz_id: int, student: User) -> QuizAt
         student_id=student.id,
         attempt_number=attempts_count + 1,
         status=AttemptStatus.IN_PROGRESS,
-        total_marks=quiz.total_marks
+        total_marks=quiz.total_marks,
+        answers=[
+            Answer(question_id=q.id, selected_option_id=None, status=AnswerStatus.NOT_VISITED)
+            for q in quiz.questions
+        ],
     )
     db.add(new_attempt)
     await db.commit()
-    await db.refresh(new_attempt)
+    await db.refresh(new_attempt, attribute_names=["id", "started_at"])
+
+    new_attempt.quiz = quiz
     return new_attempt
 
 async def submit_answer(db: AsyncSession, attempt_id: int, student_id: int, answer_in: AnswerSubmit) -> Answer:
@@ -121,35 +130,49 @@ async def submit_answer(db: AsyncSession, attempt_id: int, student_id: int, answ
 
     quiz = attempt.quiz
 
-    
+
     started_at = attempt.started_at.replace(tzinfo=timezone.utc) if attempt.started_at.tzinfo is None else attempt.started_at
     if quiz.time_limit_minutes and datetime.now(timezone.utc) > started_at + timedelta(minutes=quiz.time_limit_minutes):
         await grade_and_finalize_attempt(db, attempt_id)
         raise AttemptTimeExpiredError()
 
-    
-    query_val = select(Question, Option, Answer).outerjoin(
-        Option, and_(Option.id == answer_in.selected_option_id, Option.question_id == Question.id)
-    ).outerjoin(
-        Answer, and_(Answer.attempt_id == attempt_id, Answer.question_id == Question.id)
-    ).filter(
+    query_q = select(Question).filter(
         Question.id == answer_in.question_id,
         Question.quiz_id == attempt.quiz_id
     )
-    val_res = await db.execute(query_val)
-    row = val_res.first()
-
-    if not row:
+    q_res = await db.execute(query_q)
+    question = q_res.scalars().first()
+    if not question:
         raise QuestionNotFoundError()
 
-    question, option, existing_ans = row
+    if answer_in.selected_option_id is not None:
+        query_opt = select(Option).filter(
+            Option.id == answer_in.selected_option_id,
+            Option.question_id == question.id
+        )
+        opt_res = await db.execute(query_opt)
+        if not opt_res.scalars().first():
+            raise OptionNotFoundError()
 
-    if not option:
-        raise OptionNotFoundError()
+    if answer_in.selected_option_id is not None and answer_in.marked_for_review:
+        new_status = AnswerStatus.ANSWERED_MARKED_FOR_REVIEW
+    elif answer_in.selected_option_id is not None:
+        new_status = AnswerStatus.ANSWERED
+    elif answer_in.marked_for_review:
+        new_status = AnswerStatus.MARKED_FOR_REVIEW
+    else:
+        new_status = AnswerStatus.NOT_ANSWERED
 
-    
+    query_ans = select(Answer).filter(
+        Answer.attempt_id == attempt_id,
+        Answer.question_id == answer_in.question_id
+    )
+    ans_res = await db.execute(query_ans)
+    existing_ans = ans_res.scalars().first()
+
     if existing_ans:
         existing_ans.selected_option_id = answer_in.selected_option_id
+        existing_ans.status = new_status
         db.add(existing_ans)
         await db.commit()
         await db.refresh(existing_ans)
@@ -158,7 +181,8 @@ async def submit_answer(db: AsyncSession, attempt_id: int, student_id: int, answ
     new_ans = Answer(
         attempt_id=attempt_id,
         question_id=answer_in.question_id,
-        selected_option_id=answer_in.selected_option_id
+        selected_option_id=answer_in.selected_option_id,
+        status=new_status,
     )
     db.add(new_ans)
     await db.commit()
@@ -169,7 +193,7 @@ async def grade_and_finalize_attempt(db: AsyncSession, attempt_id: int) -> QuizA
     """Core logic to close an attempt, grade it, and calculate pass/fail status."""
     query_attempt = select(QuizAttempt).options(
         selectinload(QuizAttempt.answers),
-        selectinload(QuizAttempt.quiz)
+        selectinload(QuizAttempt.quiz).selectinload(Quiz.category)
     ).filter(QuizAttempt.id == attempt_id)
     
     result = await db.execute(query_attempt)
@@ -198,7 +222,11 @@ async def grade_and_finalize_attempt(db: AsyncSession, attempt_id: int) -> QuizA
     total_score = 0
     for ans in attempt.answers:
         q_info = correct_map.get(ans.question_id)
-        if q_info and ans.selected_option_id == q_info["correct_option_id"]:
+        if (
+            q_info
+            and q_info["correct_option_id"] is not None
+            and ans.selected_option_id == q_info["correct_option_id"]
+        ):
             ans.is_correct = True
             ans.marks_awarded = q_info["marks"]
             total_score += q_info["marks"]
@@ -224,7 +252,10 @@ async def grade_and_finalize_attempt(db: AsyncSession, attempt_id: int) -> QuizA
 
     db.add(attempt)
     await db.commit()
-    await db.refresh(attempt)
+    await db.refresh(attempt, attribute_names=[
+        "status", "score", "passed", "submitted_at", "graded_at", "time_taken_seconds"
+    ])
+    attempt.quiz = quiz
     return attempt
 
 async def get_attempt_result(db: AsyncSession, attempt_id: int, user: User) -> QuizAttempt:
@@ -248,21 +279,44 @@ async def get_attempt_result(db: AsyncSession, attempt_id: int, user: User) -> Q
 
     return attempt
 
-async def get_student_attempts(db: AsyncSession, student_id: int) -> list[QuizAttempt]:
-    query = select(QuizAttempt).options(
-        selectinload(QuizAttempt.quiz).selectinload(Quiz.category)
-    ).filter(QuizAttempt.student_id == student_id)
+async def get_student_attempts(
+    db: AsyncSession,
+    student_id: int,
+    limit: int = 50,
+    offset: int = 0,
+) -> list[QuizAttempt]:
+    query = (
+        select(QuizAttempt)
+        .options(
+            selectinload(QuizAttempt.quiz).selectinload(Quiz.category),
+            selectinload(QuizAttempt.answers)
+        )
+        .filter(QuizAttempt.student_id == student_id)
+        .offset(offset)
+        .limit(limit)
+    )
     result = await db.execute(query)
     return result.scalars().all()
 
-async def get_quiz_attempts(db: AsyncSession, quiz_id: int) -> list[QuizAttempt]:
-    query = select(QuizAttempt).options(
-        selectinload(QuizAttempt.student),
-        selectinload(QuizAttempt.quiz)
-    ).filter(QuizAttempt.quiz_id == quiz_id)
+async def get_quiz_attempts(
+    db: AsyncSession,
+    quiz_id: int,
+    limit: int = 50,
+    offset: int = 0,
+) -> list[QuizAttempt]:
+    query = (
+        select(QuizAttempt)
+        .options(
+            selectinload(QuizAttempt.student),
+            selectinload(QuizAttempt.quiz).selectinload(Quiz.category),
+            selectinload(QuizAttempt.answers),
+        )
+        .filter(QuizAttempt.quiz_id == quiz_id)
+        .offset(offset)
+        .limit(limit)
+    )
     result = await db.execute(query)
     return result.scalars().all()
-
 
 async def get_quiz_leaderboard(db: AsyncSession, quiz_id: int, user: User) -> list[LeaderboardEntry]:
     
