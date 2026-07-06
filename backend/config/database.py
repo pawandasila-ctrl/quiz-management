@@ -57,6 +57,7 @@ logger = logging.getLogger(__name__)
 
 
 import subprocess
+import sys
 
 def run_migrations():
     """
@@ -64,6 +65,35 @@ def run_migrations():
     This avoids event loop conflicts inside async FastAPI startup lifespans.
     """
     try:
+        logger.info("Checking database status...")
+        init_script = (
+            "import asyncio\n"
+            "import models.user\n"
+            "import models.quiz\n"
+            "import models.result\n"
+            "from config.database import engine, Base\n"
+            "from sqlalchemy import text\n"
+            "async def main():\n"
+            "    async with engine.begin() as conn:\n"
+            "        res = await conn.execute(text(\"SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'\"))\n"
+            "        if not res.all():\n"
+            "            print('Initializing database schema...')\n"
+            "            await conn.run_sync(Base.metadata.create_all)\n"
+            "            await conn.execute(text(\"CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(32) NOT NULL, CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num))\"))\n"
+            "            await conn.execute(text(\"INSERT INTO alembic_version (version_num) VALUES ('eb70263d4660')\"))\n"
+            "            print('Done')\n"
+            "asyncio.run(main())\n"
+        )
+        
+        init_result = subprocess.run(
+            [sys.executable, "-c", init_script],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        if "Initializing database schema..." in init_result.stdout:
+            logger.info("Empty database detected. Base schema initialized successfully.")
+
         logger.info("Running database migrations via Alembic...")
         result = subprocess.run(
             ["alembic", "upgrade", "head"],
