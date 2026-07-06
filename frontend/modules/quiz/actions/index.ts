@@ -1,6 +1,7 @@
 import { axiosClient } from "@/hooks/use-axios";
 import { Quiz, Category, QuizAttempt, LeaderboardEntry, AnswerState } from "../types";
 import { User, UserRole } from "../../auth/types";
+import { encryptPayload } from "@/lib/crypto";
 
 export async function getStudentQuizzesRequest(): Promise<Quiz[]> {
   const res = await axiosClient.get<Quiz[]>("/student/quiz");
@@ -38,7 +39,11 @@ export async function submitAnswerRequest(
   attemptId: number,
   payload: SaveAnswerPayload,
 ): Promise<AnswerState> {
-  const res = await axiosClient.post<AnswerState>(`/student/attempt/${attemptId}/answer`, payload);
+  const encryptionKey = process.env.NEXT_PUBLIC_API_ENCRYPTION_KEY || "dev-encryption-key-must-be-32-bytes-long!";
+  const encrypted = await encryptPayload(payload, encryptionKey);
+  const res = await axiosClient.post<AnswerState>(`/student/attempt/${attemptId}/answer`, {
+    encrypted_data: encrypted,
+  });
   return res.data;
 }
 

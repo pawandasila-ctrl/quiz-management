@@ -4,6 +4,7 @@ from typing import List
 
 class Settings(BaseSettings):
     SECRET_KEY: str    
+    API_ENCRYPTION_KEY: str = "dev-encryption-key-must-be-32-bytes-long!"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080
     DATABASE_URL: str   
     ENVIRONMENT: str = "development"  

@@ -56,49 +56,27 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def _stamp_head_if_unversioned(sync_conn) -> None:
+import subprocess
+
+def run_migrations():
     """
-    If this DB has never been touched by Alembic (no alembic_version row), stamp it at head
-    right after create_all() bootstraps a fresh schema -- so future `alembic upgrade` calls
-    don't try to replay history against a DB that's already at the latest shape.
-    Existing, already-versioned DBs are left untouched; run `alembic upgrade head` to apply
-    pending migrations to those (see Dockerfile / README).
+    Runs alembic migrations programmatically by invoking the CLI in a subprocess.
+    This avoids event loop conflicts inside async FastAPI startup lifespans.
     """
-    from alembic.config import Config as AlembicConfig
-    from alembic.script import ScriptDirectory
-    from alembic.runtime.migration import MigrationContext
-
-    backend_dir = Path(__file__).resolve().parent.parent
-    alembic_cfg = AlembicConfig(str(backend_dir / "alembic.ini"))
-    alembic_cfg.set_main_option("script_location", str(backend_dir / "alembic"))
-    script = ScriptDirectory.from_config(alembic_cfg)
-
-    context = MigrationContext.configure(sync_conn)
-    if context.get_current_revision() is None:
-        context.stamp(script, "head")
-
-
-async def init_db():
-    logger.info("Initializing database schemas...")
-    retries = 15
-    while retries > 0:
-        try:
-            async with engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
-                await conn.run_sync(_stamp_head_if_unversioned)
-            logger.info("Database connection and schema creation successful.")
-            return
-        except (OperationalError, Exception) as e:
-            logger.warning(f"Database connection failed: {e}")
-            logger.warning(f"Retrying in 3 seconds... ({retries - 1} retries left)")
-            await asyncio.sleep(3)
-            retries -= 1
-
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-        await conn.run_sync(_stamp_head_if_unversioned)
-
+    try:
+        logger.info("Running database migrations via Alembic...")
+        result = subprocess.run(
+            ["alembic", "upgrade", "head"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        logger.info("Database migrations completed successfully.")
+        if result.stdout:
+            logger.debug(f"Alembic stdout: {result.stdout}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Database migration failed: {e.stderr}")
+        raise RuntimeError(f"Database migration failed: {e.stderr}")
 
 async def get_db():
     async with SessionLocal() as db:

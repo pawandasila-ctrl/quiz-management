@@ -4,6 +4,19 @@ from schemas.user import UserCreate
 from controllers import users as user_controller
 from models.quiz import QuizStatus, QuestionType
 from models.result import AttemptStatus
+from config.settings import settings
+import base64
+import json
+import hashlib
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from os import urandom
+
+def encrypt_payload(payload: dict, key_str: str) -> str:
+    key = hashlib.sha256(key_str.encode()).digest()
+    aesgcm = AESGCM(key)
+    nonce = urandom(12)
+    ciphertext = aesgcm.encrypt(nonce, json.dumps(payload).encode('utf-8'), None)
+    return base64.b64encode(nonce + ciphertext).decode('utf-8')
 
 pytestmark = pytest.mark.asyncio
 
@@ -120,9 +133,14 @@ async def test_quiz_attempt_grading_lifecycle(client, db_session):
     assert start_res.json()["status"] == "in_progress"
     
     
-    ans_res = await client.post(f"/student/attempt/{attempt_id}/answer", json={
+    payload = {
         "question_id": question_id,
-        "selected_option_id": opt1_id
+        "selected_option_id": opt1_id,
+        "marked_for_review": False
+    }
+    encrypted_data = encrypt_payload(payload, settings.API_ENCRYPTION_KEY)
+    ans_res = await client.post(f"/student/attempt/{attempt_id}/answer", json={
+        "encrypted_data": encrypted_data
     })
     assert ans_res.status_code == 200
     

@@ -8,7 +8,7 @@ from slowapi import _rate_limit_exceeded_handler
 import asyncio
 import logging
 
-from config.database import init_db, engine, SessionLocal
+from config.database import engine, SessionLocal
 from config.settings import settings
 from config.logging import setup_logging
 from config.limiter import limiter
@@ -46,7 +46,10 @@ async def lifespan(app: FastAPI):
                 f"Wildcard CORS origins are not allowed in production: {wildcards}"
             )
 
-    await init_db()
+
+    if settings.ENVIRONMENT != "testing":
+        from config.database import run_migrations
+        run_migrations()
 
     cleanup_task = asyncio.create_task(_cleanup_expired_sessions())
     logger.info("Application startup complete. Environment: %s", settings.ENVIRONMENT)
@@ -75,6 +78,17 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
     allow_headers=["Authorization", "Content-Type"],
 )
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
+    return response
 
 # Routers
 app.include_router(auth_router, prefix=API_PREFIX)

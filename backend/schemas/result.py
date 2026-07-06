@@ -23,6 +23,9 @@ class AnswerSubmit(BaseModel):
     selected_option_id: Optional[int] = Field(None, description="null clears the current selection")
     marked_for_review: bool = Field(False, description="Whether the student marked this question for review")
 
+class EncryptedPayload(BaseModel):
+    encrypted_data: str = Field(..., description="Base64-encoded encrypted AES-256-GCM ciphertext")
+
 class AnswerStateResponse(BaseModel):
     """Live in-progress answer state — deliberately excludes grading fields so the answer key never leaks mid-attempt."""
     question_id: int
