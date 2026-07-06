@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React from "react";
 import { useAdminQuizAttempts, useAdminQuizDetails, useDeleteAttempt } from "@/modules/quiz/hooks";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +24,7 @@ import {
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 interface SubmissionsTableClientProps {
   quizId: number;
@@ -34,22 +35,6 @@ export default function SubmissionsTableClient({ quizId }: SubmissionsTableClien
   const { data: attempts, isLoading: isAttemptsLoading, error } = useAdminQuizAttempts(quizId);
   const deleteAttemptMutation = useDeleteAttempt(quizId);
 
-  const handleDeleteAttempt = useCallback(
-    (attemptId: number) => {
-      if (
-        window.confirm(
-          "Are you sure you want to delete/reset this student's attempt? This will permanently delete their answers and allow them to take the quiz again."
-        )
-      ) {
-        deleteAttemptMutation.mutate(attemptId, {
-          onSuccess: () => toast.success("Attempt deleted/reset successfully."),
-          onError: (err) =>
-            toast.error(err.message || "Failed to delete attempt."),
-        });
-      }
-    },
-    [deleteAttemptMutation]
-  );
 
   const isLoading = isQuizLoading || isAttemptsLoading;
 
@@ -164,15 +149,31 @@ export default function SubmissionsTableClient({ quizId }: SubmissionsTableClien
                             <Eye className="h-3.5 w-3.5" />
                             Review Answers
                           </Link>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled={deleteAttemptMutation.isPending}
-                            onClick={() => handleDeleteAttempt(att.id)}
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                          <ConfirmDialog
+                            title="Reset Attempt"
+                            description="Are you sure you want to delete/reset this student's attempt? This will permanently delete their answers and allow them to take the quiz again."
+                            onConfirm={() => {
+                              deleteAttemptMutation.mutate(att.id, {
+                                onSuccess: () => toast.success("Attempt deleted/reset successfully."),
+                                onError: (err) =>
+                                  toast.error(err.message || "Failed to delete attempt."),
+                              });
+                            }}
+                            confirmText="Reset"
+                            cancelText="Cancel"
+                            variant="destructive"
+                            isLoading={deleteAttemptMutation.isPending}
+                            loadingText="Resetting..."
+                            trigger={
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            }
+                          />
                         </div>
                       </TableCell>
                     </TableRow>

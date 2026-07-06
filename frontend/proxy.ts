@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { sidebarConfig } from "./app/(dashboard)/_data/sidebar.data";
-import type { UserRole } from "./modules/auth/types";
+import type { UserRole } from "./security-rules";
 import {
   SECURITY_CONFIG,
   containsXssPattern,

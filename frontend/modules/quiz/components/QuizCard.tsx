@@ -1,5 +1,7 @@
 "use client";
 
+import ConfirmDialog from "@/components/ConfirmDialog";
+
 import React, { useCallback, useMemo } from "react";
 import Link from "next/link";
 import {
@@ -81,19 +83,6 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
         toast.error(err.message || "Failed to release results."),
     });
   }, [releaseResultsMutation, quiz.id]);
-
-  const handleDeleteQuiz = useCallback(() => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this quiz? This will permanently delete the quiz, its questions, and all student attempts.",
-      )
-    ) {
-      deleteQuizMutation.mutate(quiz.id, {
-        onSuccess: () => toast.success("Quiz deleted successfully."),
-        onError: (err) => toast.error(err.message || "Failed to delete quiz."),
-      });
-    }
-  }, [deleteQuizMutation, quiz.id]);
 
   return (
     <div className="group relative flex flex-col rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
@@ -230,16 +219,32 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
         )}
 
         {(quiz.status === "draft" || quiz.status === "closed") && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleDeleteQuiz}
-            disabled={deleteQuizMutation.isPending}
-            className="flex-1 min-w-[120px] h-8 gap-1.5 text-xs border-border text-muted-foreground hover:text-destructive hover:bg-destructive/10 justify-center"
-          >
-            <Trash2 className="h-3.5 w-3.5 shrink-0" />
-            <span>Delete Quiz</span>
-          </Button>
+          <ConfirmDialog
+            title="Delete Quiz"
+            description={`Are you sure you want to delete the quiz "${quiz.title}"? This will permanently delete the quiz, its questions, and all student attempts.`}
+            onConfirm={() => {
+              deleteQuizMutation.mutate(quiz.id, {
+                onSuccess: () => toast.success("Quiz deleted successfully."),
+                onError: (err) =>
+                  toast.error(err.message || "Failed to delete quiz."),
+              });
+            }}
+            confirmText="Delete"
+            cancelText="Cancel"
+            variant="destructive"
+            isLoading={deleteQuizMutation.isPending}
+            loadingText="Deleting..."
+            trigger={
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 min-w-[120px] h-8 gap-1.5 text-xs border-border text-muted-foreground hover:text-destructive hover:bg-destructive/10 justify-center"
+              >
+                <Trash2 className="h-3.5 w-3.5 shrink-0" />
+                <span>Delete Quiz</span>
+              </Button>
+            }
+          />
         )}
       </div>
     </div>

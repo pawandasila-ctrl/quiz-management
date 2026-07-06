@@ -1,3 +1,11 @@
+export type UserRole = "admin" | "student" | "instructor";
+
+export const ROLES = {
+  ADMIN: "admin" as UserRole,
+  STUDENT: "student" as UserRole,
+  INSTRUCTOR: "instructor" as UserRole,
+} as const;
+
 const getCspValue = (): string => {
   const defaultConnectSrc = [
     "'self'",

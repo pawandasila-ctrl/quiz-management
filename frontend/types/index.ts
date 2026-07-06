@@ -1,4 +1,5 @@
-export type UserRole = 'admin' | 'student' | 'instructor';
+import { UserRole } from "@/security-rules";
+export type { UserRole };
 
 export interface User {
   id: number;

@@ -348,6 +348,8 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
     const onFullscreenChange = () => {
       if (!document.fullscreenElement) {
         handleViolation("exiting fullscreen mode");
+      } else {
+        setShowViolationModal(false);
       }
     };
     const onWindowBlur = () => {
@@ -411,8 +413,10 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
   }, []);
 
   const handleReturnToFullscreen = useCallback(() => {
+    if (typeof window !== "undefined") {
+      window.focus();
+    }
     requestFullscreen();
-    setShowViolationModal(false);
   }, []);
 
   const handleManualSubmit = useCallback(async () => {
