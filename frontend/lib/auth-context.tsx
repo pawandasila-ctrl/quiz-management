@@ -9,7 +9,6 @@ import {
   logoutRequest,
   getMeRequest,
 } from "@/modules/auth/actions";
-import { setAuthToken, clearAuthToken } from "@/hooks/use-axios";
 
 interface AuthContextType {
   user: User | null;
@@ -59,7 +58,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const data = await loginRequest(email, password);
       setUser(data.user);
-      setAuthToken(data.access_token);
 
       if (typeof document !== "undefined") {
         document.cookie = `has_session=true; Path=/; Max-Age=604800; SameSite=Lax; Secure`;
@@ -89,7 +87,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // 2. Automatically log in after registration
       const data = await loginRequest(email, password);
       setUser(data.user);
-      setAuthToken(data.access_token);
 
       // Set helper cookies client-side for Next.js middleware (to support cross-domain)
       if (typeof document !== "undefined") {
@@ -114,7 +111,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Logout request failed:", error);
     } finally {
       setUser(null);
-      clearAuthToken();
       // Clear cookies
       if (typeof document !== "undefined") {
         document.cookie =
