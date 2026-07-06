@@ -1,4 +1,4 @@
-import { axiosClient } from "@/hooks/use-axios";
+import { axiosClient, setAuthToken, clearAuthToken } from "@/hooks/use-axios";
 import { User, UserLoginResponse } from "../types";
 
 export async function loginRequest(email: string, password: string): Promise<UserLoginResponse> {
@@ -6,6 +6,8 @@ export async function loginRequest(email: string, password: string): Promise<Use
     email,
     password,
   });
+
+  setAuthToken(res.data.access_token);
   return res.data;
 }
 
@@ -18,7 +20,11 @@ export async function registerRequest(name: string, email: string, password: str
 }
 
 export async function logoutRequest(): Promise<void> {
-  await axiosClient.post("/auth/logout");
+  try {
+    await axiosClient.post("/auth/logout");
+  } finally {
+    clearAuthToken();
+  }
 }
 
 export async function getMeRequest(): Promise<User> {
