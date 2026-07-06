@@ -177,3 +177,15 @@ export async function createQuestionRequest(
 export async function deleteQuestionRequest(questionId: number): Promise<void> {
   await axiosClient.delete(`/admin/questions/${questionId}`);
 }
+
+export async function deleteCategoryRequest(categoryId: number): Promise<void> {
+  await axiosClient.delete(`/admin/categories/${categoryId}`);
+}
+
+export async function deleteAttemptRequest(attemptId: number): Promise<void> {
+  await axiosClient.delete(`/admin/attempts/${attemptId}`);
+}
+
+export async function deleteQuizRequest(quizId: number): Promise<void> {
+  await axiosClient.delete(`/admin/quiz/${quizId}`);
+}

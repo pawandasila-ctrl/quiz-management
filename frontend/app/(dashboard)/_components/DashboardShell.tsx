@@ -59,7 +59,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
     [role],
   );
 
-  const isAdmin = role === "admin";
+  const isAdmin = role === "admin" || role === "instructor";
 
   const pageTitle = useMemo(() => {
     const segments = pathname.split("/").filter(Boolean);

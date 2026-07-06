@@ -7,7 +7,7 @@ export default async function RootPage() {
   const role = cookieStore.get("role")?.value;
 
   if (hasSession === "true") {
-    if (role === "admin") {
+    if (role === "admin" || role === "instructor") {
       redirect("/admin");
     } else {
       redirect("/dashboard");

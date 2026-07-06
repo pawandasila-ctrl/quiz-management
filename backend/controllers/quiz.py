@@ -47,6 +47,15 @@ async def get_categories(db: AsyncSession) -> list[Category]:
     result = await db.execute(query)
     return result.scalars().all()
 
+async def delete_category(db: AsyncSession, category_id: int) -> None:
+    query = select(Category).filter(Category.id == category_id)
+    result = await db.execute(query)
+    cat = result.scalars().first()
+    if not cat:
+        raise CategoryNotFoundError()
+    await db.delete(cat)
+    await db.commit()
+
 # ── Quiz Controller ──────────────────────────────────────────────────────────
 async def create_quiz(db: AsyncSession, quiz_in: QuizCreate, creator_id: int) -> Quiz:
     if quiz_in.category_id is not None:

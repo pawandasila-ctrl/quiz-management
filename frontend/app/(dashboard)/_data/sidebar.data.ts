@@ -20,13 +20,13 @@ export const sidebarConfig: SidebarItem[] = [
     title: "Quiz Management",
     url: "/admin",
     icon: LayoutDashboard,
-    roles: ["admin"],
+    roles: ["admin", "instructor"],
   },
   {
     title: "Category Management",
     url: "/admin/categories",
     icon: FolderOpen,
-    roles: ["admin"],
+    roles: ["admin", "instructor"],
   },
   {
     title: "User Management",

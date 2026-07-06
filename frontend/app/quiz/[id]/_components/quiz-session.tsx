@@ -137,6 +137,8 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
   const [isSubmittingManual, setIsSubmittingManual] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [violationCount, setViolationCount] = useState(0);
+  const [showViolationModal, setShowViolationModal] = useState(false);
+  const [violationsEnabled, setViolationsEnabled] = useState(false);
 
   useEffect(() => {
     if (!isAuthLoading && !user) router.replace("/login");
@@ -297,61 +299,84 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
     [finalizeQuizMutation, attempt],
   );
 
+  // Settle delay after starting to avoid immediate false-positive violation warnings
+  useEffect(() => {
+    if (hasConfirmedStart && attempt?.status === "in_progress") {
+      const timer = setTimeout(() => {
+        setViolationsEnabled(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    } else {
+      setViolationsEnabled(false);
+    }
+  }, [hasConfirmedStart, attempt?.status]);
+
   const handleViolation = useCallback(
     (reason: string) => {
       if (
         !attempt ||
         attempt.status !== "in_progress" ||
-        triggerAutoSubmitRef.current
+        triggerAutoSubmitRef.current ||
+        !violationsEnabled
       )
         return;
+
       setViolationCount((prev) => {
         const next = prev + 1;
         if (next >= MAX_VIOLATIONS) {
           handleAutoSubmit("Too many violations detected!");
+          setShowViolationModal(false);
         } else {
-          toast.warning(
-            `Warning ${next}/${MAX_VIOLATIONS}: ${reason}. Your quiz will auto-submit after ${MAX_VIOLATIONS} warnings.`,
-          );
+          setShowViolationModal(true);
         }
         return next;
       });
     },
-    [attempt, handleAutoSubmit],
+    [attempt, handleAutoSubmit, violationsEnabled]
   );
 
   // Anti-cheating: tab-switch / window-blur / fullscreen-exit detection, and disable right-click & copy.
   useEffect(() => {
-    if (!hasConfirmedStart || !attempt || attempt.status !== "in_progress")
+    if (!hasConfirmedStart || !attempt || attempt.status !== "in_progress" || !violationsEnabled)
       return;
 
     const onVisibilityChange = () => {
-      if (document.hidden)
+      if (document.hidden) {
         handleViolation("switching tabs or minimizing the window");
+      }
     };
     const onFullscreenChange = () => {
-      if (!document.fullscreenElement)
+      if (!document.fullscreenElement) {
         handleViolation("exiting fullscreen mode");
+      }
+    };
+    const onWindowBlur = () => {
+      handleViolation("focusing on another window or application");
     };
     const onContextMenu = (e: MouseEvent) => e.preventDefault();
     const onCopy = (e: ClipboardEvent) => e.preventDefault();
 
     document.addEventListener("visibilitychange", onVisibilityChange);
     document.addEventListener("fullscreenchange", onFullscreenChange);
+    window.addEventListener("blur", onWindowBlur);
     document.addEventListener("contextmenu", onContextMenu);
     document.addEventListener("copy", onCopy);
 
     return () => {
       document.removeEventListener("visibilitychange", onVisibilityChange);
       document.removeEventListener("fullscreenchange", onFullscreenChange);
+      window.removeEventListener("blur", onWindowBlur);
       document.removeEventListener("contextmenu", onContextMenu);
       document.removeEventListener("copy", onCopy);
     };
-  }, [hasConfirmedStart, attempt, handleViolation]);
+  }, [hasConfirmedStart, attempt, handleViolation, violationsEnabled]);
 
   // Release fullscreen once the attempt is graded (manual submit, auto-submit, or time expiry).
   useEffect(() => {
-    if (attempt?.status === "graded") exitFullscreen();
+    if (attempt?.status === "graded") {
+      exitFullscreen();
+      setShowViolationModal(false);
+    }
   }, [attempt?.status]);
 
   useEffect(() => {
@@ -383,6 +408,11 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
   const handleConfirmStart = useCallback(() => {
     requestFullscreen();
     setHasConfirmedStart(true);
+  }, []);
+
+  const handleReturnToFullscreen = useCallback(() => {
+    requestFullscreen();
+    setShowViolationModal(false);
   }, []);
 
   const handleManualSubmit = useCallback(async () => {
@@ -929,6 +959,41 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
           isLoading={finalizeQuizMutation.isPending || isSubmittingManual}
           loadingText="Submitting..."
         />
+
+        {showViolationModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md transition-all duration-300">
+            <div className="w-full max-w-md p-6 rounded-2xl border border-destructive bg-card shadow-lg text-center animate-in fade-in zoom-in duration-300">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10 text-destructive mb-4">
+                <ShieldAlert className="h-7 w-7 text-destructive" />
+              </div>
+              <h2 className="text-xl font-bold tracking-tight text-foreground mb-2">
+                Security Violation Detected
+              </h2>
+              <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+                You have exited fullscreen mode or shifted focus to another application. To prevent academic malpractice, you must return to fullscreen to resume the assessment.
+              </p>
+              
+              <div className="mb-6 p-4 rounded-xl border border-destructive/20 bg-destructive/5 text-center">
+                <p className="text-xs font-semibold uppercase tracking-wider text-destructive-foreground/90 mb-1">
+                  Violation Status
+                </p>
+                <p className="text-2xl font-black text-destructive">
+                  Warning {violationCount} / {MAX_VIOLATIONS}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-1.5">
+                  Reaching {MAX_VIOLATIONS} warnings will result in automatic submission of your exam.
+                </p>
+              </div>
+
+              <Button
+                onClick={handleReturnToFullscreen}
+                className="w-full font-semibold shadow-md bg-destructive hover:bg-destructive/95 text-destructive-foreground"
+              >
+                Return to Fullscreen & Resume
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </PageShell>
   );

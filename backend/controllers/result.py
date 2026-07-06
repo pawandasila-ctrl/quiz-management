@@ -271,7 +271,7 @@ async def get_attempt_result(db: AsyncSession, attempt_id: int, user: User) -> Q
     if not attempt:
         raise AttemptNotFoundError()
 
-    if user.role != UserRole.ADMIN and attempt.student_id != user.id:
+    if user.role not in (UserRole.ADMIN, UserRole.INSTRUCTOR) and attempt.student_id != user.id:
         raise AttemptNotFoundError()
 
     if user.role == UserRole.STUDENT and not attempt.quiz.results_visible:
@@ -377,3 +377,13 @@ async def get_quiz_leaderboard(db: AsyncSession, quiz_id: int, user: User) -> li
             )
         )
     return leaderboard
+
+
+async def delete_attempt(db: AsyncSession, attempt_id: int) -> None:
+    query = select(QuizAttempt).filter(QuizAttempt.id == attempt_id)
+    res = await db.execute(query)
+    attempt = res.scalars().first()
+    if not attempt:
+        raise AttemptNotFoundError()
+    await db.delete(attempt)
+    await db.commit()

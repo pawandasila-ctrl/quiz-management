@@ -2,7 +2,12 @@
 
 import React, { useCallback, useMemo } from "react";
 import Link from "next/link";
-import { usePublishQuiz, useCloseQuiz, useReleaseResults } from "../hooks";
+import {
+  usePublishQuiz,
+  useCloseQuiz,
+  useReleaseResults,
+  useDeleteQuiz,
+} from "../hooks";
 import { Quiz, QuizStatus } from "../types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +21,7 @@ import {
   Star,
   Layers,
   Users,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -49,6 +55,7 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
   const publishMutation = usePublishQuiz();
   const closeMutation = useCloseQuiz();
   const releaseResultsMutation = useReleaseResults();
+  const deleteQuizMutation = useDeleteQuiz();
 
   const statusCfg = useMemo(() => STATUS_CONFIG[quiz.status], [quiz.status]);
 
@@ -74,6 +81,19 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
         toast.error(err.message || "Failed to release results."),
     });
   }, [releaseResultsMutation, quiz.id]);
+
+  const handleDeleteQuiz = useCallback(() => {
+    if (
+      window.confirm(
+        "Are you sure you want to delete this quiz? This will permanently delete the quiz, its questions, and all student attempts.",
+      )
+    ) {
+      deleteQuizMutation.mutate(quiz.id, {
+        onSuccess: () => toast.success("Quiz deleted successfully."),
+        onError: (err) => toast.error(err.message || "Failed to delete quiz."),
+      });
+    }
+  }, [deleteQuizMutation, quiz.id]);
 
   return (
     <div className="group relative flex flex-col rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
@@ -206,6 +226,19 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
           >
             <Eye className="h-3.5 w-3.5 shrink-0" />
             <span>Release Results</span>
+          </Button>
+        )}
+
+        {(quiz.status === "draft" || quiz.status === "closed") && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleDeleteQuiz}
+            disabled={deleteQuizMutation.isPending}
+            className="flex-1 min-w-[120px] h-8 gap-1.5 text-xs border-border text-muted-foreground hover:text-destructive hover:bg-destructive/10 justify-center"
+          >
+            <Trash2 className="h-3.5 w-3.5 shrink-0" />
+            <span>Delete Quiz</span>
           </Button>
         )}
       </div>

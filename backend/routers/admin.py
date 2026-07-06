@@ -24,7 +24,7 @@ MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 router = APIRouter(
     prefix="/admin",
     tags=["Admin Management"],
-    dependencies=[Depends(require_role([UserRole.ADMIN]))]
+    dependencies=[Depends(require_role([UserRole.ADMIN, UserRole.INSTRUCTOR]))]
 )
 
 @router.post("/upload", status_code=status.HTTP_200_OK)
@@ -65,6 +65,14 @@ async def create_category(category_in: CategoryCreate, db: AsyncSession = Depend
 @router.get("/categories", response_model=List[CategoryResponse])
 async def list_categories(db: AsyncSession = Depends(get_db)):
     return await quiz_controller.get_categories(db)
+
+@router.delete("/categories/{id}", status_code=status.HTTP_200_OK)
+async def delete_category(id: int, db: AsyncSession = Depends(get_db)):
+    try:
+        await quiz_controller.delete_category(db, id)
+        return {"detail": "Category successfully deleted."}
+    except PracticeException as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
 # ── Quiz Management ──────────────────────────────────────────────────────────
 @router.post("/quiz", response_model=QuizResponse, status_code=status.HTTP_201_CREATED)
@@ -198,6 +206,14 @@ async def get_quiz_attempts(
 ):
     return await result_controller.get_quiz_attempts(db, id, limit=limit, offset=offset)
 
+@router.delete("/attempts/{id}", status_code=status.HTTP_200_OK)
+async def delete_quiz_attempt(id: int, db: AsyncSession = Depends(get_db)):
+    try:
+        await result_controller.delete_attempt(db, id)
+        return {"detail": "Attempt successfully deleted."}
+    except PracticeException as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
+
 @router.get("/quiz/{id}/leaderboard", response_model=List[LeaderboardEntry])
 async def get_quiz_leaderboard(
     id: int,
@@ -214,12 +230,18 @@ async def get_quiz_leaderboard(
 async def list_users(
     limit: int = Query(50, ge=1, le=200, description="Max results to return"),
     offset: int = Query(0, ge=0, description="Number of results to skip"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role([UserRole.ADMIN]))
 ):
     return await user_controller.get_all_users(db, limit=limit, offset=offset)
 
 @router.put("/users/{id}/role", response_model=UserResponse)
-async def promote_user(id: int, role: UserRole = Query(...), db: AsyncSession = Depends(get_db)):
+async def promote_user(
+    id: int,
+    role: UserRole = Query(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role([UserRole.ADMIN]))
+):
     try:
         return await user_controller.update_user_role(db, id, role)
     except PracticeException as e:

@@ -413,3 +413,36 @@ async def test_nested_question_options_creation(client, db_session):
     assert q_data["options"][1]["is_correct"] is True
     assert q_data["options"][2]["text"] == "5"
     assert q_data["options"][2]["is_correct"] is False
+
+
+async def test_category_and_attempt_deletion(client, db_session):
+    # 1. Create and log in Admin
+    admin_in = UserCreate(
+        name="Admin Deletion Tester",
+        email="admindelete@example.com",
+        password="adminpassword123"
+    )
+    admin_user = await user_controller.create_user(db_session, admin_in)
+    await user_controller.update_user_role(db_session, admin_user.id, UserRole.ADMIN)
+    
+    await client.post("/auth/login", json={
+        "email": "admindelete@example.com",
+        "password": "adminpassword123"
+    })
+
+    # 2. Create Category
+    cat_res = await client.post("/admin/categories", json={
+        "name": "Deletion Category",
+        "description": "To be deleted"
+    })
+    assert cat_res.status_code == 201
+    cat_id = cat_res.json()["id"]
+
+    # 3. Delete Category
+    del_cat_res = await client.delete(f"/admin/categories/{cat_id}")
+    assert del_cat_res.status_code == 200
+    assert del_cat_res.json()["detail"] == "Category successfully deleted."
+
+    # Try to delete again
+    del_cat_again = await client.delete(f"/admin/categories/{cat_id}")
+    assert del_cat_again.status_code == 400

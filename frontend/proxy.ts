@@ -57,17 +57,22 @@ export function proxy(request: NextRequest) {
 
   // 2. Authenticated user accessing auth routes — redirect to their home
   if (hasSession && (path === "/login" || path === "/register")) {
-    const defaultUrl = role === "admin" ? "/admin" : "/dashboard";
+    const defaultUrl = role === "student" ? "/dashboard" : "/admin";
     return NextResponse.redirect(new URL(defaultUrl, request.url));
   }
+
+  // Special exception: Allow admin and instructor to view student-side leaderboards
+  const isLeaderboardRoute =
+    path.startsWith("/dashboard/quiz/") && path.endsWith("/leaderboard");
 
   // 3. Authenticated user accessing a route they don't have permission for
   if (
     hasSession &&
     matchingItem &&
-    !matchingItem.roles.includes(role as UserRole)
+    !matchingItem.roles.includes(role as UserRole) &&
+    !(isLeaderboardRoute && (role === "admin" || role === "instructor"))
   ) {
-    const defaultUrl = role === "admin" ? "/admin" : "/dashboard";
+    const defaultUrl = role === "student" ? "/dashboard" : "/admin";
     return NextResponse.redirect(new URL(defaultUrl, request.url));
   }
 

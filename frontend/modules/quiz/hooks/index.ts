@@ -21,6 +21,9 @@ import {
   releaseResultsRequest,
   createQuestionRequest,
   deleteQuestionRequest,
+  deleteCategoryRequest,
+  deleteAttemptRequest,
+  deleteQuizRequest,
   SaveAnswerPayload,
   CreateQuizPayload,
   CreateCategoryPayload,
@@ -253,6 +256,39 @@ export function useDeleteQuestion(quizId: number) {
         queryKey: ["admin-quiz-details", quizId],
       });
       queryClient.invalidateQueries({ queryKey: ["admin-quizzes"] });
+    },
+  });
+}
+
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, number>({
+    mutationFn: (categoryId: number) => deleteCategoryRequest(categoryId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
+    },
+  });
+}
+
+export function useDeleteAttempt(quizId: number) {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, number>({
+    mutationFn: (attemptId: number) => deleteAttemptRequest(attemptId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin-quiz-attempts", quizId],
+      });
+    },
+  });
+}
+
+export function useDeleteQuiz() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, number>({
+    mutationFn: (quizId: number) => deleteQuizRequest(quizId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-quizzes"] });
+      queryClient.invalidateQueries({ queryKey: ["student-quizzes"] });
     },
   });
 }

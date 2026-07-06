@@ -113,7 +113,7 @@ async def list_own_attempts(
 async def get_quiz_leaderboard(
     id: int,
     request: Request,
-    current_user: User = Depends(require_role([UserRole.STUDENT])),
+    current_user: User = Depends(require_role([UserRole.STUDENT, UserRole.INSTRUCTOR, UserRole.ADMIN])),
     db: AsyncSession = Depends(get_db)
 ):
     try:
