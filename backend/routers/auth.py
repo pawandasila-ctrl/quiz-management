@@ -68,7 +68,7 @@ async def login_user(
         value=session.token,
         httponly=True,
         secure=is_production,
-        samesite="lax",
+        samesite="none" if is_production else "lax",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
 
@@ -78,7 +78,7 @@ async def login_user(
         value=user.role.value,
         httponly=False,
         secure=is_production,
-        samesite="lax",
+        samesite="none" if is_production else "lax",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
     response.set_cookie(
@@ -86,7 +86,7 @@ async def login_user(
         value="true",
         httponly=False,
         secure=is_production,
-        samesite="lax",
+        samesite="none" if is_production else "lax",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
 
@@ -137,7 +137,7 @@ async def refresh_token(
             value=new_session.token,
             httponly=True,
             secure=is_production,
-            samesite="lax",
+            samesite="none" if is_production else "lax",
             max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
         )
         return UserLoginResponse(
