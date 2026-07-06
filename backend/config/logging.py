@@ -43,5 +43,12 @@ def setup_logging(environment: str = "development") -> None:
 
     root.addHandler(handler)
 
+    if environment == "production":
+        # Force uvicorn and fastapi logs to propagate to root logger and use our JSONFormatter
+        for logger_name in ("uvicorn", "uvicorn.access", "uvicorn.error", "fastapi"):
+            l = logging.getLogger(logger_name)
+            l.handlers = []
+            l.propagate = True
+
     if environment != "development":
         logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
