@@ -305,9 +305,10 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
       const timer = setTimeout(() => {
         setViolationsEnabled(true);
       }, 1500);
-      return () => clearTimeout(timer);
-    } else {
-      setViolationsEnabled(false);
+      return () => {
+        clearTimeout(timer);
+        setViolationsEnabled(false);
+      };
     }
   }, [hasConfirmedStart, attempt?.status]);
 
@@ -321,6 +322,8 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
       )
         return;
 
+      console.warn("Anti-cheat violation detected:", reason);
+
       setViolationCount((prev) => {
         const next = prev + 1;
         if (next >= MAX_VIOLATIONS) {
@@ -332,12 +335,16 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
         return next;
       });
     },
-    [attempt, handleAutoSubmit, violationsEnabled]
+    [attempt, handleAutoSubmit, violationsEnabled],
   );
 
-  // Anti-cheating: tab-switch / window-blur / fullscreen-exit detection, and disable right-click & copy.
   useEffect(() => {
-    if (!hasConfirmedStart || !attempt || attempt.status !== "in_progress" || !violationsEnabled)
+    if (
+      !hasConfirmedStart ||
+      !attempt ||
+      attempt.status !== "in_progress" ||
+      !violationsEnabled
+    )
       return;
 
     const onVisibilityChange = () => {
@@ -377,7 +384,6 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
   useEffect(() => {
     if (attempt?.status === "graded") {
       exitFullscreen();
-      setShowViolationModal(false);
     }
   }, [attempt?.status]);
 
@@ -974,9 +980,11 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
                 Security Violation Detected
               </h2>
               <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
-                You have exited fullscreen mode or shifted focus to another application. To prevent academic malpractice, you must return to fullscreen to resume the assessment.
+                You have exited fullscreen mode or shifted focus to another
+                application. To prevent academic malpractice, you must return to
+                fullscreen to resume the assessment.
               </p>
-              
+
               <div className="mb-6 p-4 rounded-xl border border-destructive/20 bg-destructive/5 text-center">
                 <p className="text-xs font-semibold uppercase tracking-wider text-destructive-foreground/90 mb-1">
                   Violation Status
@@ -985,7 +993,8 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
                   Warning {violationCount} / {MAX_VIOLATIONS}
                 </p>
                 <p className="text-[10px] text-muted-foreground mt-1.5">
-                  Reaching {MAX_VIOLATIONS} warnings will result in automatic submission of your exam.
+                  Reaching {MAX_VIOLATIONS} warnings will result in automatic
+                  submission of your exam.
                 </p>
               </div>
 
