@@ -69,7 +69,8 @@ async def login_user(
         httponly=True,
         secure=is_production,
         samesite="none" if is_production else "lax",
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        domain=settings.COOKIE_DOMAIN
     )
 
     # Set non-HttpOnly helper cookies readable by frontend
@@ -79,7 +80,8 @@ async def login_user(
         httponly=False,
         secure=is_production,
         samesite="none" if is_production else "lax",
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        domain=settings.COOKIE_DOMAIN
     )
     response.set_cookie(
         key="has_session",
@@ -87,7 +89,8 @@ async def login_user(
         httponly=False,
         secure=is_production,
         samesite="none" if is_production else "lax",
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        domain=settings.COOKIE_DOMAIN
     )
 
     return UserLoginResponse(
@@ -138,7 +141,8 @@ async def refresh_token(
             httponly=True,
             secure=is_production,
             samesite="none" if is_production else "lax",
-            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            domain=settings.COOKIE_DOMAIN
         )
         return UserLoginResponse(
             access_token=new_session.token,

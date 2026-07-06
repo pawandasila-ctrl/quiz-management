@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str   
     ENVIRONMENT: str = "development"  
     CORS_ORIGINS: List[str] = ["http://localhost:3000"]
+    COOKIE_DOMAIN: str | None = None
 
     # ── Cloudinary ────────────────────────────────────────────────────────────
     CLOUDINARY_CLOUD_NAME: str
