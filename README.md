@@ -1,142 +1,151 @@
-# Quiz System API Backend
+# Quiz Management System
 
-A performance-optimized FastAPI backend for a Quiz Management System supporting administrators and students. Features include secure session-based authentication, category and quiz management, questions and options authoring, automatic grading, and ranked leaderboards.
+A production-grade, highly optimized Quiz Management System featuring secure role-based access control, anti-cheat test taking, category and attempt administration, and real-time state synchronization.
+
+This repository is structured as a monorepo containing:
+* **`backend/`**: A high-performance FastAPI service utilizing async SQLAlchemy, PostgreSQL, and token-based cookie authentication.
+* **`frontend/`**: A state-of-the-art Next.js App Router frontend built with React Query, Radix/Shadcn UI components, and client-side API routing.
 
 ---
 
-## 🚀 Key Performance Optimizations
+## 🔒 Role-Based Access Control (RBAC)
 
-This backend has been optimized for low latency and high efficiency, especially when interacting with remote databases (like Neon PostgreSQL):
+The system supports three roles, with centralized role checking on both the frontend and backend:
 
-1. **Answer Submission Latency Reduction (50%+ speedup)**: Combined several operations into fewer roundtrips. Instead of querying Question, Option, and existing Answer in multiple sequential SQL calls, we use a single outer-joined SQL query to retrieve and validate them all at once.
-2. **Eager Session Loading**: Eager-loads the authenticated `User` with the `Session` using `joinedload(Session.user)`. This saves a secondary database query on **every single protected endpoint request**.
-3. **Database-Level Leaderboard Rankings**: Utilizes SQL `ROW_NUMBER() OVER (PARTITION BY student_id ORDER BY score DESC, time_taken_seconds ASC)` window function inside the database to fetch only the *best* attempt per student. It ranks and orders students in a single query instead of fetching thousands of attempts and deduplicating in Python memory.
-4. **Scalar Subquery Marks Recalculation**: Replaced the sequential load-and-sum marks routine with a single SQL `UPDATE` statement using a scalar subquery `SUM(marks)` for immediate database updates.
+| Capability | Student | Instructor | Admin |
+| :--- | :---: | :---: | :---: |
+| **Take Quizzes & View Personal History** | ✅ | ❌ | ❌ |
+| **View Student Leaderboard** | ✅ | ✅ | ✅ |
+| **Create & Update Quizzes/Categories** | ❌ | ✅ | ✅ |
+| **Delete Quizzes, Categories & Student Attempts** | ❌ | ✅ | ✅ |
+| **Promote User Roles & Manage Users** | ❌ | ❌ | ✅ |
+
+---
+
+## 🛡️ Anti-Cheat & Security System
+
+The student exam interface is heavily protected against academic dishonesty with several active client-side security measures:
+1. **Force Fullscreen Mode**: The quiz starts in full-screen and locks the UI.
+2. **Tab / Window Switching Tracking**: The quiz listens for `visibilitychange` and window `blur` events (which captures Alt-Tabbing, split-screens, clicking outside the window, or launching browser inspect tools).
+3. **Graceful Settlement Delay**: A 1.5-second settle period post-launch prevents false-positive warnings.
+4. **Security Dialog Lock**: When a focus or fullscreen violation occurs, a non-dismissible warning dialog overrides the view, indicating warning counts (e.g., `Warning 1 / 3`) and forcing the student to click to re-enter fullscreen and resume.
+5. **Auto-Submit Guard**: Reaching the limit of 3 warnings automatically locks the attempt and submits the current answers to the backend.
+6. **Input Protections**: Context menus (right-click) and text copying are disabled.
+
+---
+
+## 🚀 Performance Optimizations
+
+1. **Eager Session Loading**: Eagerly resolves the authenticated user for every session token lookup using `joinedload(Session.user)`.
+2. **Database-Level Leaderboard Rankings**: Uses SQL window functions (`ROW_NUMBER()`) to fetch only the best attempts per user, ranking them efficiently in a single DB query.
+3. **Eager relationship joins**: Uses SQLAlchemy `selectinload` for categories and creators to prevent N+1 query patterns during serialization.
+4. **Batch Answer Validations**: Aggregates question/option verification queries into a single outer-joined query during grading.
 
 ---
 
 ## 🛠️ Technology Stack
 
-- **Framework**: [FastAPI](https://fastapi.tiangolo.com/) (Python 3.12+)
-- **ORM / Database**: [SQLAlchemy 2.0](https://www.sqlalchemy.org/) (Async Engine)
-- **Database Driver**: `asyncpg` (PostgreSQL)
-- **Security**: Argon2id via `argon2-cffi` (Secure password hashing) & random URL-safe session token cookies
-- **Cloud Storage**: [Cloudinary](https://cloudinary.com/) (Asynchronous image file uploads)
-- **Testing**: `pytest`, `pytest-asyncio`, `httpx` (Integration testing), `aiosqlite` (In-memory SQLite for fast testing isolated from PostgreSQL)
+### Backend
+* **Framework**: [FastAPI](https://fastapi.tiangolo.com/) (Python 3.12+)
+* **ORM**: [SQLAlchemy 2.0](https://www.sqlalchemy.org/) (Async Engine)
+* **Database Driver**: `asyncpg` (PostgreSQL)
+* **Security**: Argon2id via `argon2-cffi`
+* **Storage**: [Cloudinary](https://cloudinary.com/) (Async file uploads)
+* **Testing**: `pytest` & `pytest-asyncio` with isolated in-memory SQLite
+
+### Frontend
+* **Framework**: [Next.js](https://nextjs.org/) (App Router, React 19)
+* **Styling**: Vanilla CSS with Tailwind CSS utilities & [Shadcn UI](https://ui.shadcn.com/)
+* **State Management**: [React Query (TanStack)](https://tanstack.com/query) (API cache & mutations)
+* **HTTP Client**: Axios with dynamic middleware client-side cookie rewrite
 
 ---
 
 ## 📂 Project Structure
 
 ```text
-backend/
-├── config/             # Configuration & security dependencies
-│   ├── database.py     # Database engine & sessionmaker
-│   ├── security.py     # Password hashing, dependencies (require_role)
-│   └── settings.py     # Pydantic-settings environment variables
-├── controllers/        # Business logic & SQL queries
-│   ├── quiz.py         # Quiz, category, question, & option controllers
-│   ├── result.py       # Enrollment, attempt, grading, & leaderboard controllers
-│   └── users.py        # Authentication & user management controllers
-├── models/             # SQLAlchemy declarative models
-│   ├── quiz.py         # Category, Quiz, Question, Option
-│   ├── result.py       # Enrollment, QuizAttempt, Answer
-│   └── user.py         # User, Session
-├── routers/            # FastAPI Endpoint routing
-│   ├── admin.py        # /admin endpoints (Restricted to UserRole.ADMIN)
-│   ├── auth.py         # /auth endpoints (Registration, login, logout, me)
-│   └── student.py      # /student endpoints (Restricted to UserRole.STUDENT)
-├── schemas/            # Pydantic data validation models
-│   ├── quiz.py
-│   ├── result.py
-│   └── user.py
-├── tests/              # Test suite (Integration tests)
-│   ├── conftest.py     # Test database config & fixtures
-│   ├── test_auth.py    # Auth unit/integration tests
-│   └── test_quiz.py    # Quiz lifecycle, grading, and leaderboard tests
-├── main.py             # Application entrypoint & middlewares (CORS)
-├── requirements.txt    # Production & development dependencies
-└── pyproject.toml      # Pytest & project configurations
+quiz-management/
+├── backend/                  # FastAPI Backend API Service
+│   ├── alembic/              # Database migration scripts
+│   ├── config/               # Database, security (require_role), & settings config
+│   ├── controllers/          # Business logic & SQL queries
+│   ├── models/               # SQLAlchemy Declarative Models
+│   ├── routers/              # Endpoint routing (admin.py, auth.py, student.py)
+│   ├── schemas/              # Pydantic validation models
+│   └── tests/                # pytest integration tests
+├── frontend/                 # Next.js Frontend Web Application
+│   ├── app/                  # Next.js App Router (pages & dashboard)
+│   ├── components/           # Common components (ConfirmDialog, PageShell)
+│   ├── hooks/                # React state & Axios config hooks
+│   ├── lib/                  # Shared utilities (auth-context, crypto helpers)
+│   ├── modules/              # Feature modules (auth, quiz, question components)
+│   ├── proxy.ts              # Route protection middleware
+│   └── security-rules.ts     # Centralized role definitions & CSP configurations
+└── docker-compose.yml        # Development Docker orchestration
 ```
 
 ---
 
-## ⚙️ Getting Started
+## ⚙️ Setup & Installation
 
-### Prerequisites
+### 1. Backend Service
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Create and activate a python virtual environment:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Copy `.env.example` to `.env` and fill in database, Cloudinary, and CORS configurations.
+5. Run migrations:
+   ```bash
+   alembic upgrade head
+   ```
+6. Start the API server:
+   ```bash
+   python main.py
+   ```
+   * *API docs are accessible at `http://localhost:5001/docs`.*
 
-- Python 3.12 or higher
-- Pip (Python Package Index)
+### 2. Frontend Web Application
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Install npm dependencies:
+   ```bash
+   npm install
+   ```
+3. Copy `.env.example` to `.env.local` and define `NEXT_PUBLIC_API_URL` (e.g. `http://localhost:5001/api`).
+4. Run the Next.js development server:
+   ```bash
+   npm run dev
+   ```
+   * *The web interface is accessible at `http://localhost:3000`.*
 
-### 1. Installation
+### 3. Docker Compose (Quickstart)
+To run the backend server inside a Docker container:
+```bash
+docker-compose up --build
+```
 
-Clone this repository and navigate to the `backend` folder:
+---
 
+## 🧪 Testing
+
+Run backend tests using in-memory SQLite (no setup required):
 ```bash
 cd backend
-```
-
-Create a virtual environment and activate it:
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-Install the dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Environment Configuration
-
-Create a `.env` file in the `backend/` directory by copying `.env.example`:
-
-```bash
-cp .env.example .env
-```
-
-Open `.env` and fill in your configurations:
-
-- `DATABASE_URL`: PostgreSQL connection string (e.g. `postgresql+asyncpg://user:pass@host/db`)
-- `SECRET_KEY`: Long, random secret key for cryptography/hashing
-- `ENVIRONMENT`: Set to `development` or `production`
-- `CORS_ORIGINS`: JSON list of allowed origins (e.g. `["http://localhost:3000"]`)
-- Cloudinary credentials (`CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`) for image upload features.
-
-### 3. Running the Server
-
-Start the development server with hot-reload enabled:
-
-```bash
-python main.py
-```
-
-The application will start running on **`http://127.0.0.1:5001`**.
-
-- **Interactive API Documentation**: Visit `http://127.0.0.1:5001/docs` to view Swagger UI.
-- **Alternative Docs**: Visit `http://127.0.0.1:5001/redoc` to view ReDoc.
-
----
-
-## 🧪 Running Tests
-
-The test suite runs in-memory using an isolated SQLite engine. No database setup is needed to run the tests.
-
-Run the test suite with:
-
-```bash
 pytest
 ```
-
----
-
-## 🔒 Security & RBAC
-
-The API supports Role-Based Access Control (RBAC):
-- **Guest / Public**: `/auth/register` (always creates `student` users), `/auth/login`.
-- **Student User (`student` role)**: Can view published quizzes, enroll, start attempts, submit answers, finalize attempts, view their own graded attempts, and see the leaderboard.
-- **Admin User (`admin` role)**: Can manage categories, create/update/publish/delete quizzes, manage questions & options, release results, view all student attempts, upload images to Cloudinary, and promote/change user roles.
-
-Protected routes extract the cookie session token `access_token` automatically (or fall back to the `Authorization: Bearer <token>` header).
+Verify frontend type safety:
+```bash
+cd frontend
+npx tsc --noEmit
+```
