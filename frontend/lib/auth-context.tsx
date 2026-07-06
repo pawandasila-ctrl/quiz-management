@@ -58,7 +58,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const data = await loginRequest(email, password);
       setUser(data.user);
-      
+
+      if (typeof document !== "undefined") {
+        document.cookie = `has_session=true; Path=/; Max-Age=604800; SameSite=Lax; Secure`;
+        document.cookie = `role=${data.user.role}; Path=/; Max-Age=604800; SameSite=Lax; Secure`;
+      }
+
       // Redirect based on role
       if (data.user.role === "admin") {
         router.push("/admin");
@@ -82,6 +87,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // 2. Automatically log in after registration
       const data = await loginRequest(email, password);
       setUser(data.user);
+
+      // Set helper cookies client-side for Next.js middleware (to support cross-domain)
+      if (typeof document !== "undefined") {
+        document.cookie = `has_session=true; Path=/; Max-Age=604800; SameSite=Lax; Secure`;
+        document.cookie = `role=${data.user.role}; Path=/; Max-Age=604800; SameSite=Lax; Secure`;
+      }
+
       router.push("/dashboard");
     } catch (error) {
       setUser(null);
@@ -101,8 +113,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       // Clear cookies
       if (typeof document !== "undefined") {
-        document.cookie = "has_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-        document.cookie = "role=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+        document.cookie =
+          "has_session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+        document.cookie =
+          "role=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;";
       }
       setLoading(false);
       router.push("/login");
