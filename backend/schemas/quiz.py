@@ -99,6 +99,12 @@ class QuizUpdate(BaseModel):
     shuffle_questions: Optional[bool] = None
     max_attempts: Optional[int] = Field(None, ge=1)
 
+class QuizCreatorResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+    model_config = ConfigDict(from_attributes=True)
+
 class QuizResponse(QuizBase):
     id: int
     created_by_id: int
@@ -110,6 +116,7 @@ class QuizResponse(QuizBase):
     created_at: datetime
     updated_at: datetime
     category: Optional[CategoryResponse] = None
+    creator: Optional[QuizCreatorResponse] = None
     model_config = ConfigDict(from_attributes=True)
 
 class QuizFullResponse(QuizResponse):

@@ -87,7 +87,10 @@ async def get_all_quizzes(
     limit: int = 50,
     offset: int = 0,
 ) -> list[Quiz]:
-    query = select(Quiz).options(selectinload(Quiz.category))
+    query = select(Quiz).options(
+        selectinload(Quiz.category),
+        selectinload(Quiz.creator)
+    )
     if category_id is not None:
         query = query.filter(Quiz.category_id == category_id)
     if status is not None:
@@ -99,6 +102,7 @@ async def get_all_quizzes(
 async def get_quiz_by_id(db: AsyncSession, quiz_id: int) -> Quiz:
     query = select(Quiz).options(
         selectinload(Quiz.category),
+        selectinload(Quiz.creator),
         selectinload(Quiz.questions).selectinload(Question.options)
     ).filter(Quiz.id == quiz_id)
     

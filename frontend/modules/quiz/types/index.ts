@@ -48,6 +48,11 @@ export interface Quiz {
   updated_at: string;
   category?: Category | null;
   questions?: Question[];
+  creator?: {
+    id: number;
+    name: string;
+    email: string;
+  } | null;
 }
 
 export type AttemptStatus = "in_progress" | "submitted" | "graded";

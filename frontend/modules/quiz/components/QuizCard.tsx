@@ -122,6 +122,12 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
           <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2 h-10">
             {quiz.description || "No description provided."}
           </p>
+          {quiz.creator && (
+            <div className="mt-2 flex items-center gap-1.5 text-[11px]">
+              <span className="text-muted-foreground">Created by:</span>
+              <span className="font-medium text-foreground">{quiz.creator.name}</span>
+            </div>
+          )}
         </div>
       </div>
 
