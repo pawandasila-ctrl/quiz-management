@@ -195,7 +195,8 @@ async def grade_and_finalize_attempt(db: AsyncSession, attempt_id: int) -> QuizA
     """Core logic to close an attempt, grade it, and calculate pass/fail status."""
     query_attempt = select(QuizAttempt).options(
         selectinload(QuizAttempt.answers),
-        selectinload(QuizAttempt.quiz).selectinload(Quiz.category)
+        selectinload(QuizAttempt.quiz).selectinload(Quiz.category),
+        selectinload(QuizAttempt.quiz).selectinload(Quiz.creator)
     ).filter(QuizAttempt.id == attempt_id)
     
     result = await db.execute(query_attempt)
