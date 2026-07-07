@@ -104,3 +104,45 @@ PostgreSQL custom enums do not automatically drop when you execute `DROP TABLE C
 Defends auth-sensitive routes against brute force and account registration bots using client IP tracking (`slowapi`):
 * **User Registration**: Restricted to **5 attempts per hour**.
 * **User Login**: Restricted to **10 attempts per minute**.
+
+---
+
+### 6. Eager Loading in Async SQLAlchemy (`selectinload` vs `joinedload`)
+By default, SQLAlchemy uses **lazy loading** for relationships. When you access a related model attribute (e.g. serializing `attempt.quiz.creator` during a response), SQLAlchemy attempts to issue a synchronous SQL query on-the-fly. 
+
+In async Python, executing implicit blocking database I/O is prohibited, which triggers the infamous error:
+`MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here.`
+
+To make our async API robust, we explicitly eager-load all serialized relationships using two distinct strategies:
+
+#### A. `joinedload()` (Joined Eager Loading)
+* **How it works**: Modifies the SELECT statement to perform a SQL `LEFT OUTER JOIN` in a single query.
+* **Best used for**: **Many-to-One** and **One-to-One** relationships (e.g., fetching a `QuizAttempt` and loading its parent `student` or `quiz` model).
+* **Why**: It loads the related scalar object in a single round-trip without duplicate row multiplication.
+
+#### B. `selectinload()` (Select-IN Eager Loading)
+* **How it works**: Emits a second, separate SELECT statement using the `IN` clause populated with the parent IDs from the first query (e.g., `SELECT ... WHERE parent_id IN (1, 2, 3...)`).
+* **Best used for**: **One-to-Many** and **Many-to-Many** collection relationships (e.g., fetching a `Quiz` and loading its collection of `questions`, or fetching an `Attempt` and loading its `answers`).
+* **Why**: Doing a join on a collection table creates a Cartesian product (duplicate rows for every question option/answer), which wastes memory. `selectinload` avoids this completely by fetching collections in a clean, secondary query.
+
+---
+
+### 7. Production Connection Pooling & Concurrency Scaling
+For enterprise deployments, we configured the backend network and database layers for maximum throughput:
+
+#### A. Database Connection Pool Optimization
+* In `config/database.py`, we override the default SQLAlchemy connection limits for production databases (Neon/PostgreSQL):
+  ```python
+  if not DATABASE_URL.startswith("sqlite"):
+      engine_kwargs["pool_size"] = 20
+      engine_kwargs["max_overflow"] = 10
+  ```
+* **Why**: Default configuration caps connections at 5, causing `TimeoutError` under load. We expanded it to 20 stable connections and 10 overflow buffers. It dynamically ignores this option for SQLite, keeping your `pytest` suite fully compatible and error-free.
+
+#### B. Multi-Worker Scaling
+* In the `Dockerfile` runtime command, we execute:
+  ```dockerfile
+  CMD alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 5001 --workers 4
+  ```
+* **Why**: Python runs on a single CPU core. Specifying `--workers 4` spawns 4 isolated worker processes under Uvicorn, allowing your backend to handle four times the concurrent load by distributing HTTP requests across multiple processor cores.
+
