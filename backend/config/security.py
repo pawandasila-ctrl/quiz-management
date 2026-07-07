@@ -1,6 +1,6 @@
 from typing import List
 from models.user import UserRole, User, Session
-from config.database import get_db
+from config.database import DbSession
 from fastapi import Depends, Header, Cookie, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -51,8 +51,8 @@ def get_token_from_request(
     )
 
 async def get_current_user(
-    token: str = Depends(get_token_from_request),
-    db: AsyncSession = Depends(get_db)
+    db: DbSession,
+    token: str = Depends(get_token_from_request)
 ) -> User:
     """
     FastAPI dependency — validates the session token and returns the authenticated User.

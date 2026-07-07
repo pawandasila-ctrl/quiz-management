@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from config.database import get_db
+from config.database import DbSession
 from config.settings import settings
 from config.limiter import limiter
 from config.security import verify_password, get_current_user, get_token_from_request
@@ -26,7 +26,7 @@ router = APIRouter(
 async def register_student(
     request: Request,
     user_in: UserCreate,
-    db: AsyncSession = Depends(get_db)
+    db: DbSession
 ):
     try:
         new_user = await user_controller.create_user(db, user_in)
@@ -49,7 +49,7 @@ async def login_user(
     request: Request,
     user_in: UserLogin,
     response: Response,
-    db: AsyncSession = Depends(get_db)
+    db: DbSession
 ):
     user = await user_controller.get_user_by_email(db, user_in.email)
     if not user or not verify_password(user_in.password, user.hashed_password):
@@ -110,8 +110,8 @@ async def login_user(
 )
 async def logout(
     response: Response,
-    token: str = Depends(get_token_from_request),
-    db: AsyncSession = Depends(get_db)
+    db: DbSession,
+    token: str = Depends(get_token_from_request)
 ):
     try:
         await user_controller.logout_user(db, token)
@@ -134,8 +134,8 @@ async def logout(
 )
 async def refresh_token(
     response: Response,
-    token: str = Depends(get_token_from_request),
-    db: AsyncSession = Depends(get_db)
+    db: DbSession,
+    token: str = Depends(get_token_from_request)
 ):
     try:
         new_session = await user_controller.validate_and_refresh_session(db, token)

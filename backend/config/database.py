@@ -5,7 +5,8 @@ import asyncio
 import logging
 from pathlib import Path
 from sqlalchemy.exc import OperationalError
-
+from typing import Annotated
+from fastapi import Depends
 
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
@@ -83,3 +84,6 @@ async def get_db():
             yield db
         finally:
             await db.close()
+
+
+DbSession = Annotated[AsyncSession, Depends(get_db)]

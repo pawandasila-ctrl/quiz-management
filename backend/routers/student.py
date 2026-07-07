@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
-from config.database import get_db
+from config.database import DbSession
 from config.security import require_role
 from config.limiter import limiter
 from models.user import UserRole, User
@@ -27,15 +27,15 @@ router = APIRouter(
 @limiter.limit("60/minute")
 async def list_published_quizzes(
     request: Request,
+    db: DbSession,
     limit: int = Query(50, ge=1, le=200, description="Max results to return"),
-    offset: int = Query(0, ge=0, description="Number of results to skip"),
-    db: AsyncSession = Depends(get_db)
+    offset: int = Query(0, ge=0, description="Number of results to skip")
 ):
     return await quiz_controller.get_all_quizzes(db, status=QuizStatus.PUBLISHED, limit=limit, offset=offset)
 
 @router.get("/quiz/{id}", response_model=QuizStudentResponse)
 @limiter.limit("30/minute")
-async def get_quiz_student_view(id: int, request: Request, db: AsyncSession = Depends(get_db)):
+async def get_quiz_student_view(id: int, request: Request, db: DbSession):
     """Retrieve quiz questions and options without correct answer markers."""
     try:
         quiz = await quiz_controller.get_quiz_by_id(db, id)
@@ -50,8 +50,8 @@ async def get_quiz_student_view(id: int, request: Request, db: AsyncSession = De
 async def start_quiz_attempt(
     id: int,
     request: Request,
-    current_user: User = Depends(require_role([UserRole.STUDENT])),
-    db: AsyncSession = Depends(get_db)
+    db: DbSession,
+    current_user: User = Depends(require_role([UserRole.STUDENT]))
 ):
     try:
         return await result_controller.start_attempt(db, id, current_user)
@@ -63,9 +63,9 @@ async def start_quiz_attempt(
 async def submit_question_answer(
     id: int,
     request: Request,
+    db: DbSession,
     answer_in: AnswerSubmit = Depends(decrypted_body(AnswerSubmit)),
-    current_user: User = Depends(require_role([UserRole.STUDENT])),
-    db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(require_role([UserRole.STUDENT]))
 ):
     try:
         return await result_controller.submit_answer(db, id, current_user.id, answer_in)
@@ -77,7 +77,7 @@ async def submit_question_answer(
 async def finalize_attempt(
     id: int,
     request: Request,
-    db: AsyncSession = Depends(get_db)
+    db: DbSession
 ):
     try:
         return await result_controller.grade_and_finalize_attempt(db, id)
@@ -89,8 +89,8 @@ async def finalize_attempt(
 async def view_attempt_result(
     id: int,
     request: Request,
-    current_user: User = Depends(require_role([UserRole.STUDENT])),
-    db: AsyncSession = Depends(get_db)
+    db: DbSession,
+    current_user: User = Depends(require_role([UserRole.STUDENT]))
 ):
     try:
         return await result_controller.get_attempt_result(db, id, current_user)
@@ -101,10 +101,10 @@ async def view_attempt_result(
 @limiter.limit("30/minute")
 async def list_own_attempts(
     request: Request,
+    db: DbSession,
     current_user: User = Depends(require_role([UserRole.STUDENT])),
     limit: int = Query(50, ge=1, le=200, description="Max results to return"),
-    offset: int = Query(0, ge=0, description="Number of results to skip"),
-    db: AsyncSession = Depends(get_db)
+    offset: int = Query(0, ge=0, description="Number of results to skip")
 ):
     return await result_controller.get_student_attempts(db, current_user.id, limit=limit, offset=offset)
 
@@ -113,8 +113,8 @@ async def list_own_attempts(
 async def get_quiz_leaderboard(
     id: int,
     request: Request,
-    current_user: User = Depends(require_role([UserRole.STUDENT, UserRole.INSTRUCTOR, UserRole.ADMIN])),
-    db: AsyncSession = Depends(get_db)
+    db: DbSession,
+    current_user: User = Depends(require_role([UserRole.STUDENT, UserRole.INSTRUCTOR, UserRole.ADMIN]))
 ):
     try:
         return await result_controller.get_quiz_leaderboard(db, id, current_user)

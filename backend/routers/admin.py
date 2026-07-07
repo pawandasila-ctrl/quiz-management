@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, File, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
-from config.database import get_db
+from config.database import DbSession
 from config.security import require_role
 from models.user import UserRole, User
 from schemas.user import UserResponse
@@ -59,15 +59,15 @@ async def upload_file(
 
 # ── Category Endpoints ───────────────────────────────────────────────────────
 @router.post("/categories", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
-async def create_category(category_in: CategoryCreate, db: AsyncSession = Depends(get_db)):
+async def create_category(category_in: CategoryCreate, db: DbSession):
     return await quiz_controller.create_category(db, category_in)
 
 @router.get("/categories", response_model=List[CategoryResponse])
-async def list_categories(db: AsyncSession = Depends(get_db)):
+async def list_categories(db: DbSession):
     return await quiz_controller.get_categories(db)
 
 @router.delete("/categories/{id}", status_code=status.HTTP_200_OK)
-async def delete_category(id: int, db: AsyncSession = Depends(get_db)):
+async def delete_category(id: int, db: DbSession):
     try:
         await quiz_controller.delete_category(db, id)
         return {"detail": "Category successfully deleted."}
@@ -78,8 +78,8 @@ async def delete_category(id: int, db: AsyncSession = Depends(get_db)):
 @router.post("/quiz", response_model=QuizResponse, status_code=status.HTTP_201_CREATED)
 async def create_quiz(
     quiz_in: QuizCreate,
-    current_user: User = Depends(require_role([UserRole.ADMIN])),
-    db: AsyncSession = Depends(get_db)
+    db: DbSession,
+    current_user: User = Depends(require_role([UserRole.ADMIN]))
 ):
     try:
         return await quiz_controller.create_quiz(db, quiz_in, current_user.id)
@@ -88,30 +88,30 @@ async def create_quiz(
 
 @router.get("/quiz", response_model=List[QuizResponse])
 async def list_quizzes(
+    db: DbSession,
     category_id: int | None = Query(None),
     status: quiz_controller.QuizStatus | None = Query(None),
     limit: int = Query(50, ge=1, le=200, description="Max results to return"),
-    offset: int = Query(0, ge=0, description="Number of results to skip"),
-    db: AsyncSession = Depends(get_db)
+    offset: int = Query(0, ge=0, description="Number of results to skip")
 ):
     return await quiz_controller.get_all_quizzes(db, category_id=category_id, status=status, limit=limit, offset=offset)
 
 @router.get("/quiz/{id}", response_model=QuizFullResponse)
-async def get_quiz_details(id: int, db: AsyncSession = Depends(get_db)):
+async def get_quiz_details(id: int, db: DbSession):
     try:
         return await quiz_controller.get_quiz_by_id(db, id)
     except PracticeException as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
 
 @router.put("/quiz/{id}", response_model=QuizResponse)
-async def update_quiz(id: int, quiz_in: QuizUpdate, db: AsyncSession = Depends(get_db)):
+async def update_quiz(id: int, quiz_in: QuizUpdate, db: DbSession):
     try:
         return await quiz_controller.update_quiz(db, id, quiz_in)
     except PracticeException as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
 @router.delete("/quiz/{id}", status_code=status.HTTP_200_OK)
-async def delete_quiz(id: int, db: AsyncSession = Depends(get_db)):
+async def delete_quiz(id: int, db: DbSession):
     try:
         await quiz_controller.delete_quiz(db, id)
         return {"detail": "Quiz successfully deleted."}
@@ -119,21 +119,21 @@ async def delete_quiz(id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
 @router.post("/quiz/{id}/publish", response_model=QuizResponse)
-async def publish_quiz(id: int, db: AsyncSession = Depends(get_db)):
+async def publish_quiz(id: int, db: DbSession):
     try:
         return await quiz_controller.publish_quiz(db, id)
     except PracticeException as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
 @router.post("/quiz/{id}/close", response_model=QuizResponse)
-async def close_quiz(id: int, db: AsyncSession = Depends(get_db)):
+async def close_quiz(id: int, db: DbSession):
     try:
         return await quiz_controller.close_quiz(db, id)
     except PracticeException as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
 @router.post("/quiz/{id}/release-results", response_model=QuizResponse)
-async def release_results(id: int, db: AsyncSession = Depends(get_db)):
+async def release_results(id: int, db: DbSession):
     try:
         return await quiz_controller.release_results(db, id)
     except PracticeException as e:
@@ -141,21 +141,21 @@ async def release_results(id: int, db: AsyncSession = Depends(get_db)):
 
 # ── Question Endpoints ───────────────────────────────────────────────────────
 @router.post("/quiz/{id}/questions", response_model=QuestionResponse, status_code=status.HTTP_201_CREATED)
-async def add_question(id: int, question_in: QuestionCreate, db: AsyncSession = Depends(get_db)):
+async def add_question(id: int, question_in: QuestionCreate, db: DbSession):
     try:
         return await quiz_controller.create_question(db, id, question_in)
     except PracticeException as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
 @router.put("/questions/{id}", response_model=QuestionResponse)
-async def update_question(id: int, question_in: QuestionCreate, db: AsyncSession = Depends(get_db)):
+async def update_question(id: int, question_in: QuestionCreate, db: DbSession):
     try:
         return await quiz_controller.update_question(db, id, question_in)
     except PracticeException as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
 @router.delete("/questions/{id}", status_code=status.HTTP_200_OK)
-async def delete_question(id: int, db: AsyncSession = Depends(get_db)):
+async def delete_question(id: int, db: DbSession):
     try:
         await quiz_controller.delete_question(db, id)
         return {"detail": "Question successfully deleted."}
@@ -164,21 +164,21 @@ async def delete_question(id: int, db: AsyncSession = Depends(get_db)):
 
 # ── Option Endpoints ─────────────────────────────────────────────────────────
 @router.post("/questions/{id}/options", response_model=OptionResponse, status_code=status.HTTP_201_CREATED)
-async def add_option(id: int, option_in: OptionCreate, db: AsyncSession = Depends(get_db)):
+async def add_option(id: int, option_in: OptionCreate, db: DbSession):
     try:
         return await quiz_controller.create_option(db, id, option_in)
     except PracticeException as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
 @router.put("/options/{id}", response_model=OptionResponse)
-async def update_option(id: int, option_in: OptionCreate, db: AsyncSession = Depends(get_db)):
+async def update_option(id: int, option_in: OptionCreate, db: DbSession):
     try:
         return await quiz_controller.update_option(db, id, option_in)
     except PracticeException as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
 @router.delete("/options/{id}", status_code=status.HTTP_200_OK)
-async def delete_option(id: int, db: AsyncSession = Depends(get_db)):
+async def delete_option(id: int, db: DbSession):
     try:
         await quiz_controller.delete_option(db, id)
         return {"detail": "Option successfully deleted."}
@@ -187,27 +187,27 @@ async def delete_option(id: int, db: AsyncSession = Depends(get_db)):
 
 # ── Enrollment Endpoints ─────────────────────────────────────────────────────
 @router.post("/quiz/{id}/enroll", response_model=EnrollmentResponse, status_code=status.HTTP_201_CREATED)
-async def enroll_student(id: int, enroll_in: EnrollmentCreate, db: AsyncSession = Depends(get_db)):
+async def enroll_student(id: int, enroll_in: EnrollmentCreate, db: DbSession):
     try:
         return await result_controller.enroll_student(db, id, enroll_in)
     except PracticeException as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
 @router.get("/quiz/{id}/enrollments", response_model=List[EnrollmentResponse])
-async def get_enrollments(id: int, db: AsyncSession = Depends(get_db)):
+async def get_enrollments(id: int, db: DbSession):
     return await result_controller.get_enrollments(db, id)
 
 @router.get("/quiz/{id}/attempts", response_model=List[AdminQuizAttemptResponse])
 async def get_quiz_attempts(
     id: int,
+    db: DbSession,
     limit: int = Query(50, ge=1, le=200, description="Max results to return"),
-    offset: int = Query(0, ge=0, description="Number of results to skip"),
-    db: AsyncSession = Depends(get_db)
+    offset: int = Query(0, ge=0, description="Number of results to skip")
 ):
     return await result_controller.get_quiz_attempts(db, id, limit=limit, offset=offset)
 
 @router.delete("/attempts/{id}", status_code=status.HTTP_200_OK)
-async def delete_quiz_attempt(id: int, db: AsyncSession = Depends(get_db)):
+async def delete_quiz_attempt(id: int, db: DbSession):
     try:
         await result_controller.delete_attempt(db, id)
         return {"detail": "Attempt successfully deleted."}
@@ -217,8 +217,8 @@ async def delete_quiz_attempt(id: int, db: AsyncSession = Depends(get_db)):
 @router.get("/quiz/{id}/leaderboard", response_model=List[LeaderboardEntry])
 async def get_quiz_leaderboard(
     id: int,
-    current_user: User = Depends(require_role([UserRole.ADMIN])),
-    db: AsyncSession = Depends(get_db)
+    db: DbSession,
+    current_user: User = Depends(require_role([UserRole.ADMIN]))
 ):
     try:
         return await result_controller.get_quiz_leaderboard(db, id, current_user)
@@ -228,9 +228,9 @@ async def get_quiz_leaderboard(
 # ── User Management ──────────────────────────────────────────────────────────
 @router.get("/users", response_model=List[UserResponse])
 async def list_users(
+    db: DbSession,
     limit: int = Query(50, ge=1, le=200, description="Max results to return"),
     offset: int = Query(0, ge=0, description="Number of results to skip"),
-    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role([UserRole.ADMIN]))
 ):
     return await user_controller.get_all_users(db, limit=limit, offset=offset)
@@ -238,8 +238,8 @@ async def list_users(
 @router.put("/users/{id}/role", response_model=UserResponse)
 async def promote_user(
     id: int,
+    db: DbSession,
     role: UserRole = Query(...),
-    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_role([UserRole.ADMIN]))
 ):
     try:
