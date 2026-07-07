@@ -90,7 +90,7 @@ async def view_attempt_result(
     id: int,
     request: Request,
     db: DbSession,
-    current_user: User = Depends(require_role([UserRole.STUDENT]))
+    current_user: User = Depends(require_role([UserRole.STUDENT, UserRole.INSTRUCTOR, UserRole.ADMIN]))
 ):
     try:
         return await result_controller.get_attempt_result(db, id, current_user)
