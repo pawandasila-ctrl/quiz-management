@@ -19,8 +19,7 @@ from utils.crypto import decrypt_payload, decrypted_body
 
 router = APIRouter(
     prefix="/student",
-    tags=["Student Features"],
-    dependencies=[Depends(require_role([UserRole.STUDENT]))]
+    tags=["Student Features"]
 )
 
 @router.get("/quiz", response_model=List[QuizResponse])
@@ -28,6 +27,7 @@ router = APIRouter(
 async def list_published_quizzes(
     request: Request,
     db: DbSession,
+    current_user: User = Depends(require_role([UserRole.STUDENT])),
     limit: int = Query(50, ge=1, le=200, description="Max results to return"),
     offset: int = Query(0, ge=0, description="Number of results to skip")
 ):
@@ -35,7 +35,12 @@ async def list_published_quizzes(
 
 @router.get("/quiz/{id}", response_model=QuizStudentResponse)
 @limiter.limit("30/minute")
-async def get_quiz_student_view(id: int, request: Request, db: DbSession):
+async def get_quiz_student_view(
+    id: int,
+    request: Request,
+    db: DbSession,
+    current_user: User = Depends(require_role([UserRole.STUDENT]))
+):
     """Retrieve quiz questions and options without correct answer markers."""
     try:
         quiz = await quiz_controller.get_quiz_by_id(db, id)
@@ -77,7 +82,8 @@ async def submit_question_answer(
 async def finalize_attempt(
     id: int,
     request: Request,
-    db: DbSession
+    db: DbSession,
+    current_user: User = Depends(require_role([UserRole.STUDENT]))
 ):
     try:
         return await result_controller.grade_and_finalize_attempt(db, id)
