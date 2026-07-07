@@ -52,7 +52,6 @@ SessionLocal = async_sessionmaker(
 
 Base = declarative_base()
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

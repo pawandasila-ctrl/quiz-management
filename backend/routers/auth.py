@@ -8,6 +8,9 @@ from schemas.user import UserCreate, UserResponse, UserLogin, UserLoginResponse
 from controllers import users as user_controller
 from utils.exceptions import SessionNotFoundError, SessionExpiredError, DuplicateEmailError
 from models.user import User
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/auth",
@@ -27,8 +30,10 @@ async def register_student(
 ):
     try:
         new_user = await user_controller.create_user(db, user_in)
+        logger.info(f"Successfully registered user with email: {user_in.email}")
         return new_user
     except DuplicateEmailError as e:
+        logger.warning(f"Registration failed: Email {user_in.email} is already registered.")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=e.message
@@ -48,18 +53,21 @@ async def login_user(
 ):
     user = await user_controller.get_user_by_email(db, user_in.email)
     if not user or not verify_password(user_in.password, user.hashed_password):
+        logger.warning(f"Failed login attempt for email: {user_in.email} (Incorrect email or password)")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password."
         )
 
     if not user.is_active:
+        logger.warning(f"Failed login attempt for email: {user_in.email} (Account is disabled)")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is disabled. Contact support."
         )
 
     session = await user_controller.create_session(db, user)
+    logger.info(f"Successful login for email: {user_in.email}, role: {user.role.value}")
     is_production = settings.ENVIRONMENT == "production"
 
     # Set access token in secure HTTP-only cookies
@@ -107,7 +115,9 @@ async def logout(
 ):
     try:
         await user_controller.logout_user(db, token)
+        logger.info("User session logged out successfully")
     except SessionNotFoundError as e:
+        logger.warning("Logout failed: Session token not found")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message)
 
     # Clear all cookies on logout
@@ -129,6 +139,7 @@ async def refresh_token(
 ):
     try:
         new_session = await user_controller.validate_and_refresh_session(db, token)
+        logger.info(f"Successfully refreshed token for user: {new_session.user.email}")
         is_production = settings.ENVIRONMENT == "production"
 
         # Update cookies with refreshed token
@@ -147,8 +158,10 @@ async def refresh_token(
             user=new_session.user
         )
     except SessionNotFoundError as e:
+        logger.warning("Token refresh failed: Session not found")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message)
     except SessionExpiredError as e:
+        logger.warning("Token refresh failed: Session expired")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message)
 
 @router.get(
