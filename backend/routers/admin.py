@@ -79,7 +79,7 @@ async def delete_category(id: int, db: DbSession):
 async def create_quiz(
     quiz_in: QuizCreate,
     db: DbSession,
-    current_user: User = Depends(require_role([UserRole.ADMIN]))
+    current_user: User = Depends(require_role([UserRole.ADMIN, UserRole.INSTRUCTOR]))
 ):
     try:
         return await quiz_controller.create_quiz(db, quiz_in, current_user.id)
@@ -218,7 +218,7 @@ async def delete_quiz_attempt(id: int, db: DbSession):
 async def get_quiz_leaderboard(
     id: int,
     db: DbSession,
-    current_user: User = Depends(require_role([UserRole.ADMIN]))
+    current_user: User = Depends(require_role([UserRole.ADMIN, UserRole.INSTRUCTOR]))
 ):
     try:
         return await result_controller.get_quiz_leaderboard(db, id, current_user)

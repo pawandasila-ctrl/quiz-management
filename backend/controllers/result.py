@@ -53,7 +53,8 @@ async def get_enrollments(db: AsyncSession, quiz_id: int) -> list[Enrollment]:
 async def start_attempt(db: AsyncSession, quiz_id: int, student: User) -> QuizAttempt:
     query_quiz = select(Quiz).options(
         selectinload(Quiz.category),
-        selectinload(Quiz.questions)
+        selectinload(Quiz.questions),
+        selectinload(Quiz.creator)
     ).filter(Quiz.id == quiz_id)
     quiz_res = await db.execute(query_quiz)
     quiz = quiz_res.scalars().first()
@@ -76,6 +77,7 @@ async def start_attempt(db: AsyncSession, quiz_id: int, student: User) -> QuizAt
     
     query_attempts = select(QuizAttempt).options(
         joinedload(QuizAttempt.quiz).selectinload(Quiz.category),
+        joinedload(QuizAttempt.quiz).selectinload(Quiz.creator),
         selectinload(QuizAttempt.answers)
     ).filter(
         QuizAttempt.quiz_id == quiz_id,
@@ -262,6 +264,7 @@ async def get_attempt_result(db: AsyncSession, attempt_id: int, user: User) -> Q
     query = select(QuizAttempt).options(
         selectinload(QuizAttempt.student),
         selectinload(QuizAttempt.quiz).selectinload(Quiz.category),
+        selectinload(QuizAttempt.quiz).selectinload(Quiz.creator),
         selectinload(QuizAttempt.answers).joinedload(Answer.question).selectinload(Question.options),
         selectinload(QuizAttempt.answers).selectinload(Answer.selected_option)
     ).filter(QuizAttempt.id == attempt_id)
@@ -289,6 +292,7 @@ async def get_student_attempts(
         select(QuizAttempt)
         .options(
             selectinload(QuizAttempt.quiz).selectinload(Quiz.category),
+            selectinload(QuizAttempt.quiz).selectinload(Quiz.creator),
             selectinload(QuizAttempt.answers)
         )
         .filter(QuizAttempt.student_id == student_id)
@@ -309,6 +313,7 @@ async def get_quiz_attempts(
         .options(
             selectinload(QuizAttempt.student),
             selectinload(QuizAttempt.quiz).selectinload(Quiz.category),
+            selectinload(QuizAttempt.quiz).selectinload(Quiz.creator),
             selectinload(QuizAttempt.answers),
         )
         .filter(QuizAttempt.quiz_id == quiz_id)
