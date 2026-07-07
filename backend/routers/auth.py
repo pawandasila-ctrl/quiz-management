@@ -22,7 +22,7 @@ router = APIRouter(
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED
 )
-@limiter.limit("10/minute")
+@limiter.limit("5/hour")
 async def register_student(
     request: Request,
     user_in: UserCreate,
