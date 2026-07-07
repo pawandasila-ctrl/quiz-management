@@ -35,13 +35,18 @@ def get_engine_url_and_args(db_url: str):
 
 DATABASE_URL, connect_args = get_engine_url_and_args(settings.DATABASE_URL)
 
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=settings.ENVIRONMENT == "development",
-    connect_args=connect_args,
-    pool_pre_ping=True,
-    pool_recycle=300,
-)
+engine_kwargs = {
+    "echo": settings.ENVIRONMENT == "development",
+    "connect_args": connect_args,
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
+}
+
+if not DATABASE_URL.startswith("sqlite"):
+    engine_kwargs["pool_size"] = 20
+    engine_kwargs["max_overflow"] = 10
+
+engine = create_async_engine(DATABASE_URL, **engine_kwargs)
 
 SessionLocal = async_sessionmaker(
     autocommit=False,
