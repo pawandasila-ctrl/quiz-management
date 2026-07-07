@@ -45,8 +45,10 @@ export function proxy(request: NextRequest) {
   const hasSession = request.cookies.get("has_session")?.value === "true";
   const role = request.cookies.get("role")?.value;
 
-  // Find if the path is managed under our restricted sidebar items
-  const matchingItem = sidebarConfig.find(
+  const sortedConfig = [...sidebarConfig].sort(
+    (a, b) => b.url.length - a.url.length,
+  );
+  const matchingItem = sortedConfig.find(
     (item) => path === item.url || path.startsWith(item.url + "/"),
   );
 

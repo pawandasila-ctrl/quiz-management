@@ -48,7 +48,13 @@ const UserRow = React.memo(function UserRow({ user }: { user: User }) {
       <TableCell className="text-muted-foreground">{user.email}</TableCell>
       <TableCell>
         <Badge
-          variant={user.role === "admin" ? "default" : "outline"}
+          variant={
+            user.role === "admin"
+              ? "default"
+              : user.role === "instructor"
+              ? "secondary"
+              : "outline"
+          }
           className="capitalize"
         >
           {user.role}
@@ -65,6 +71,7 @@ const UserRow = React.memo(function UserRow({ user }: { user: User }) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="student">Student</SelectItem>
+            <SelectItem value="instructor">Instructor</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
           </SelectContent>
         </Select>
