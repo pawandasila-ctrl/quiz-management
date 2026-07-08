@@ -56,7 +56,10 @@ SessionLocal = async_sessionmaker(
     class_=AsyncSession
 )
 
-Base = declarative_base()
+from sqlalchemy.orm import DeclarativeBase
+
+class Base(DeclarativeBase):
+    pass
 
 logger = logging.getLogger(__name__)
 
