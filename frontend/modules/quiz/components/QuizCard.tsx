@@ -24,6 +24,7 @@ import {
   Layers,
   Users,
   Trash2,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -193,8 +194,12 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
             disabled={publishMutation.isPending}
             className="flex-1 min-w-[120px] h-8 gap-1.5 text-xs bg-green-600 hover:bg-green-700 text-white justify-center"
           >
-            <Rocket className="h-3.5 w-3.5 shrink-0" />
-            <span>Publish</span>
+            {publishMutation.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+            ) : (
+              <Rocket className="h-3.5 w-3.5 shrink-0" />
+            )}
+            <span>{publishMutation.isPending ? "Publishing..." : "Publish"}</span>
           </Button>
         )}
 
@@ -206,8 +211,12 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
             disabled={closeMutation.isPending}
             className="flex-1 min-w-[120px] h-8 gap-1.5 text-xs justify-center"
           >
-            <Lock className="h-3.5 w-3.5 shrink-0" />
-            <span>Close</span>
+            {closeMutation.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+            ) : (
+              <Lock className="h-3.5 w-3.5 shrink-0" />
+            )}
+            <span>{closeMutation.isPending ? "Closing..." : "Close"}</span>
           </Button>
         )}
 
@@ -219,8 +228,14 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
             disabled={releaseResultsMutation.isPending}
             className="flex-1 min-w-[120px] h-8 gap-1.5 text-xs border-border hover:bg-accent justify-center"
           >
-            <Eye className="h-3.5 w-3.5 shrink-0" />
-            <span>Release Results</span>
+            {releaseResultsMutation.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+            ) : (
+              <Eye className="h-3.5 w-3.5 shrink-0" />
+            )}
+            <span>
+              {releaseResultsMutation.isPending ? "Releasing..." : "Release Results"}
+            </span>
           </Button>
         )}
 
