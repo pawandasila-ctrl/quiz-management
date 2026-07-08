@@ -166,6 +166,18 @@ async def close_quiz(db: AsyncSession, quiz_id: int) -> Quiz:
     await db.commit()
     return await get_quiz_by_id(db, quiz_id)
 
+async def reopen_quiz(db: AsyncSession, quiz_id: int) -> Quiz:
+    quiz = await get_quiz_by_id(db, quiz_id)
+    if quiz.status != QuizStatus.CLOSED:
+        raise QuizStatusError("Only CLOSED quizzes can be reopened.")
+        
+    quiz.status = QuizStatus.PUBLISHED
+    quiz.closed_at = None
+    db.add(quiz)
+    await db.commit()
+    return await get_quiz_by_id(db, quiz_id)
+
+
 async def release_results(db: AsyncSession, quiz_id: int) -> Quiz:
     quiz = await get_quiz_by_id(db, quiz_id)
     quiz.results_visible = True

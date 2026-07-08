@@ -9,9 +9,13 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
+import { useAuth } from "@/lib/auth-context";
+
 export default function AdminCategoryList() {
   const { data: categories, isLoading } = useAdminCategories();
   const deleteCategoryMutation = useDeleteCategory();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   if (isLoading) {
     return (
@@ -44,31 +48,36 @@ export default function AdminCategoryList() {
                 <Badge variant="outline" className="text-xs">
                   ID #{cat.id}
                 </Badge>
-                <ConfirmDialog
-                  title="Delete Category"
-                  description={`Are you sure you want to delete the category "${cat.name}"? Quizzes belonging to it will be set to uncategorized.`}
-                  onConfirm={() => {
-                    deleteCategoryMutation.mutate(cat.id, {
-                      onSuccess: () => toast.success("Category deleted successfully."),
-                      onError: (err) =>
-                        toast.error(err.message || "Failed to delete category."),
-                    });
-                  }}
-                  confirmText="Delete"
-                  cancelText="Cancel"
-                  variant="destructive"
-                  isLoading={deleteCategoryMutation.isPending}
-                  loadingText="Deleting..."
-                  trigger={
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  }
-                />
+                {isAdmin && (
+                  <ConfirmDialog
+                    title="Delete Category"
+                    description={`Are you sure you want to delete the category "${cat.name}"? Quizzes belonging to it will be set to uncategorized.`}
+                    onConfirm={() => {
+                      deleteCategoryMutation.mutate(cat.id, {
+                        onSuccess: () =>
+                          toast.success("Category deleted successfully."),
+                        onError: (err) =>
+                          toast.error(
+                            err.message || "Failed to delete category.",
+                          ),
+                      });
+                    }}
+                    confirmText="Delete"
+                    cancelText="Cancel"
+                    variant="destructive"
+                    isLoading={deleteCategoryMutation.isPending}
+                    loadingText="Deleting..."
+                    trigger={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    }
+                  />
+                )}
               </div>
             </div>
           </CardHeader>

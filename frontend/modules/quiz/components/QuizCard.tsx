@@ -7,6 +7,7 @@ import Link from "next/link";
 import {
   usePublishQuiz,
   useCloseQuiz,
+  useReopenQuiz,
   useReleaseResults,
   useDeleteQuiz,
 } from "../hooks";
@@ -25,10 +26,11 @@ import {
   Users,
   Trash2,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
+import { useAuth } from "@/lib/auth-context";
 interface QuizCardProps {
   quiz: Quiz;
 }
@@ -57,8 +59,11 @@ const STATUS_CONFIG: Record<
 export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
   const publishMutation = usePublishQuiz();
   const closeMutation = useCloseQuiz();
+  const reopenMutation = useReopenQuiz();
   const releaseResultsMutation = useReleaseResults();
   const deleteQuizMutation = useDeleteQuiz();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   const statusCfg = useMemo(() => STATUS_CONFIG[quiz.status], [quiz.status]);
 
@@ -76,6 +81,13 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
       onError: (err) => toast.error(err.message || "Failed to close quiz."),
     });
   }, [closeMutation, quiz.id]);
+
+  const handleReopen = useCallback(() => {
+    reopenMutation.mutate(quiz.id, {
+      onSuccess: () => toast.success("Quiz reopened successfully!"),
+      onError: (err) => toast.error(err.message || "Failed to reopen quiz."),
+    });
+  }, [reopenMutation, quiz.id]);
 
   const handleRelease = useCallback(() => {
     releaseResultsMutation.mutate(quiz.id, {
@@ -126,7 +138,9 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
           {quiz.creator && (
             <div className="mt-2 flex items-center gap-1.5 text-[11px]">
               <span className="text-muted-foreground">Created by:</span>
-              <span className="font-medium text-foreground">{quiz.creator.name}</span>
+              <span className="font-medium text-foreground">
+                {quiz.creator.name}
+              </span>
             </div>
           )}
         </div>
@@ -199,7 +213,9 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
             ) : (
               <Rocket className="h-3.5 w-3.5 shrink-0" />
             )}
-            <span>{publishMutation.isPending ? "Publishing..." : "Publish"}</span>
+            <span>
+              {publishMutation.isPending ? "Publishing..." : "Publish"}
+            </span>
           </Button>
         )}
 
@@ -220,6 +236,24 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
           </Button>
         )}
 
+        {quiz.status === "closed" && (
+          <Button
+            size="sm"
+            onClick={handleReopen}
+            disabled={reopenMutation.isPending}
+            className="flex-1 min-w-[120px] h-8 gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white justify-center font-medium"
+          >
+            {reopenMutation.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
+            ) : (
+              <RefreshCw className="h-3.5 w-3.5 shrink-0" />
+            )}
+            <span>
+              {reopenMutation.isPending ? "Reopening..." : "Reopen Quiz"}
+            </span>
+          </Button>
+        )}
+
         {quiz.status !== "draft" && !quiz.results_visible && (
           <Button
             size="sm"
@@ -234,12 +268,14 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
               <Eye className="h-3.5 w-3.5 shrink-0" />
             )}
             <span>
-              {releaseResultsMutation.isPending ? "Releasing..." : "Release Results"}
+              {releaseResultsMutation.isPending
+                ? "Releasing..."
+                : "Release Results"}
             </span>
           </Button>
         )}
 
-        {(quiz.status === "draft" || quiz.status === "closed") && (
+        {isAdmin && (quiz.status === "draft" || quiz.status === "closed") && (
           <ConfirmDialog
             title="Delete Quiz"
             description={`Are you sure you want to delete the quiz "${quiz.title}"? This will permanently delete the quiz, its questions, and all student attempts.`}

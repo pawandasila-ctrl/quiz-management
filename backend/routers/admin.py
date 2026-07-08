@@ -66,7 +66,7 @@ async def create_category(category_in: CategoryCreate, db: DbSession):
 async def list_categories(db: DbSession):
     return await quiz_controller.get_categories(db)
 
-@router.delete("/categories/{id}", status_code=status.HTTP_200_OK)
+@router.delete("/categories/{id}", status_code=status.HTTP_200_OK, dependencies=[Depends(require_role([UserRole.ADMIN]))])
 async def delete_category(id: int, db: DbSession):
     try:
         await quiz_controller.delete_category(db, id)
@@ -110,7 +110,7 @@ async def update_quiz(id: int, quiz_in: QuizUpdate, db: DbSession):
     except PracticeException as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
-@router.delete("/quiz/{id}", status_code=status.HTTP_200_OK)
+@router.delete("/quiz/{id}", status_code=status.HTTP_200_OK, dependencies=[Depends(require_role([UserRole.ADMIN]))])
 async def delete_quiz(id: int, db: DbSession):
     try:
         await quiz_controller.delete_quiz(db, id)
@@ -129,6 +129,13 @@ async def publish_quiz(id: int, db: DbSession):
 async def close_quiz(id: int, db: DbSession):
     try:
         return await quiz_controller.close_quiz(db, id)
+    except PracticeException as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
+
+@router.post("/quiz/{id}/reopen", response_model=QuizResponse)
+async def reopen_quiz(id: int, db: DbSession):
+    try:
+        return await quiz_controller.reopen_quiz(db, id)
     except PracticeException as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
@@ -213,7 +220,7 @@ async def get_quiz_attempts(
 ):
     return await result_controller.get_quiz_attempts(db, id, limit=limit, offset=offset)
 
-@router.delete("/attempts/{id}", status_code=status.HTTP_200_OK)
+@router.delete("/attempts/{id}", status_code=status.HTTP_200_OK, dependencies=[Depends(require_role([UserRole.ADMIN]))])
 async def delete_quiz_attempt(id: int, db: DbSession):
     try:
         await result_controller.delete_attempt(db, id)

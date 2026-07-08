@@ -18,6 +18,7 @@ import {
   updateUserRoleRequest,
   publishQuizRequest,
   closeQuizRequest,
+  reopenQuizRequest,
   releaseResultsRequest,
   createQuestionRequest,
   bulkUploadQuestionsRequest,
@@ -211,6 +212,20 @@ export function useCloseQuiz() {
   const queryClient = useQueryClient();
   return useMutation<void, Error, number>({
     mutationFn: (quizIdVal: number) => closeQuizRequest(quizIdVal),
+    onSuccess: (_, quizIdVal) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-quizzes"] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-quiz-details", quizIdVal],
+      });
+      queryClient.invalidateQueries({ queryKey: ["student-quizzes"] });
+    },
+  });
+}
+
+export function useReopenQuiz() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, number>({
+    mutationFn: (quizIdVal: number) => reopenQuizRequest(quizIdVal),
     onSuccess: (_, quizIdVal) => {
       queryClient.invalidateQueries({ queryKey: ["admin-quizzes"] });
       queryClient.invalidateQueries({

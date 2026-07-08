@@ -149,6 +149,10 @@ export async function closeQuizRequest(quizId: number): Promise<void> {
   await axiosClient.post(`/admin/quiz/${quizId}/close`);
 }
 
+export async function reopenQuizRequest(quizId: number): Promise<void> {
+  await axiosClient.post(`/admin/quiz/${quizId}/reopen`);
+}
+
 export async function releaseResultsRequest(quizId: number): Promise<void> {
   await axiosClient.post(`/admin/quiz/${quizId}/release-results`);
 }

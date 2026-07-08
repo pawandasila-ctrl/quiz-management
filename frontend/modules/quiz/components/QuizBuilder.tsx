@@ -6,6 +6,7 @@ import {
   useAdminQuizDetails,
   usePublishQuiz,
   useCloseQuiz,
+  useReopenQuiz,
 } from "../hooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import {
   CheckCircle2,
   FileQuestion,
   Upload,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -64,6 +66,7 @@ export default function QuizBuilder({ quizId }: QuizBuilderProps) {
   const { data: quiz, isLoading, error } = useAdminQuizDetails(quizId);
   const publishMutation = usePublishQuiz();
   const closeMutation = useCloseQuiz();
+  const reopenMutation = useReopenQuiz();
 
   const statusCfg = useMemo(
     () => STATUS_CONFIG[quiz?.status ?? "draft"],
@@ -87,6 +90,14 @@ export default function QuizBuilder({ quizId }: QuizBuilderProps) {
       onError: (err) => toast.error(err.message || "Failed to close."),
     });
   }, [closeMutation, quizId]);
+
+  const handleReopen = useCallback(() => {
+    reopenMutation.mutate(quizId, {
+      onSuccess: () =>
+        toast.success("Quiz reopened! Students can now take it again."),
+      onError: (err) => toast.error(err.message || "Failed to reopen."),
+    });
+  }, [reopenMutation, quizId]);
 
   if (isLoading) {
     return (
@@ -169,6 +180,22 @@ export default function QuizBuilder({ quizId }: QuizBuilderProps) {
                 <Lock className="h-3.5 w-3.5" />
               )}
               Close Quiz
+            </Button>
+          )}
+
+          {quiz.status === "closed" && (
+            <Button
+              size="sm"
+              onClick={handleReopen}
+              disabled={reopenMutation.isPending}
+              className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white h-8 text-xs font-semibold"
+            >
+              {reopenMutation.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5" />
+              )}
+              Reopen Quiz
             </Button>
           )}
 
