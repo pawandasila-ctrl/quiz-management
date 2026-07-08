@@ -425,17 +425,17 @@ async def re_grade_quiz_attempts(db: AsyncSession, quiz_id: int) -> None:
     # 2. Recalculate scores and pass/fail status for all submitted attempts of the quiz
     await db.execute(
         text(
-            "UPDATE quiz_attempts qa "
+            "UPDATE quiz_attempts "
             "SET "
-            "  score = (SELECT COALESCE(SUM(marks_awarded), 0) FROM answers WHERE attempt_id = qa.id), "
+            "  score = (SELECT COALESCE(SUM(marks_awarded), 0) FROM answers WHERE attempt_id = quiz_attempts.id), "
             "  passed = ( "
             "    CASE WHEN :total_marks > 0 THEN "
-            "      ((SELECT COALESCE(SUM(marks_awarded), 0) FROM answers WHERE attempt_id = qa.id) * 100.0 / :total_marks) >= :pass_mark "
+            "      ((SELECT COALESCE(SUM(marks_awarded), 0) FROM answers WHERE attempt_id = quiz_attempts.id) * 100.0 / :total_marks) >= :pass_mark "
             "    ELSE "
             "      true "
             "    END "
             "  ) "
-            "WHERE qa.quiz_id = :qid AND qa.status != 'in_progress'"
+            "WHERE quiz_attempts.quiz_id = :qid AND quiz_attempts.status != 'in_progress'"
         ),
         {
             "qid": quiz_id,
