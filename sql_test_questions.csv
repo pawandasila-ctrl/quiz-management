@@ -1,0 +1,5 @@
+question_text,question_type,marks,explanation,option_1,option_1_correct,option_2,option_2_correct,option_3,option_3_correct,option_4,option_4_correct
+"Which SQL statement is used to extract data from a database?",mcq,5,"SELECT is the standard SQL statement to query and retrieve data.","SELECT",true,"EXTRACT",false,"GET",false,"QUERY",false
+"Which SQL keyword is used to sort the query result-set?",mcq,5,"ORDER BY is used to sort the result-set in ascending or descending order.","SORT BY",false,"ORDER BY",true,"GROUP BY",false,"SORT",false
+"The SQL JOIN keyword joins rows from two or more tables based on a related column between them.",true_false,2,"JOIN joins rows from tables based on matching column values.","True",true,"False",false,,
+"Which SQL function is used to count the number of rows returned in a query?",mcq,3,"COUNT() counts the number of rows that match specified criteria.","SUM()",false,"COUNT()",true,"NUMBER()",false,"TOTAL()",false
