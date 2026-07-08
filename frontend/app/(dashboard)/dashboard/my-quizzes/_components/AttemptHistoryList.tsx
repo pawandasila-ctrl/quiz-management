@@ -3,30 +3,22 @@
 import React from "react";
 import Link from "next/link";
 import { useStudentAttempts } from "@/modules/quiz/hooks";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Loader2,
-  ClipboardList,
   AlertCircle,
   Calendar,
   Clock,
   ChevronRight,
   CheckCircle2,
   XCircle,
+  ClipboardList,
   Play,
-  Sparkles,
-  Timer,
 } from "lucide-react";
 
 function formatDate(value?: string | null) {
-  if (!value) return "-";
+  if (!value) return "—";
   return new Date(value).toLocaleDateString([], {
     month: "short",
     day: "numeric",
@@ -37,7 +29,7 @@ function formatDate(value?: string | null) {
 }
 
 function formatDuration(seconds?: number | null) {
-  if (seconds === null || seconds === undefined) return "-";
+  if (seconds === null || seconds === undefined) return "—";
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   if (mins === 0) return `${secs}s`;
@@ -75,7 +67,6 @@ export default function AttemptHistoryList() {
       } else {
         existing.attempts.push(attempt);
       }
-
       return acc;
     }, {});
   }, [quizAttempts]);
@@ -90,256 +81,214 @@ export default function AttemptHistoryList() {
 
   if (isLoading) {
     return (
-      <div className="flex h-80 items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-xs text-muted-foreground font-medium animate-pulse">
-            Loading your attempt history...
-          </p>
-        </div>
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <Card className="border-red-200 bg-red-50/50 dark:bg-red-950/10 text-red-900 dark:text-red-200 p-6 rounded-2xl shadow-sm max-w-2xl mx-auto">
-        <div className="flex items-start gap-4">
-          <div className="h-10 w-10 rounded-xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 shrink-0">
-            <AlertCircle className="h-5 w-5" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="font-semibold text-base">Error loading attempts</h3>
-            <p className="text-sm text-red-700/80 dark:text-red-300/80 leading-relaxed">
-              We encountered an issue fetching your attempts. Please refresh the
-              page or try again.
-            </p>
-          </div>
-        </div>
-      </Card>
+      <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+        <AlertCircle className="h-4 w-4 shrink-0" />
+        <span>Failed to load attempts. Please refresh the page.</span>
+      </div>
     );
   }
 
   if (quizAttempts.length === 0) {
     return (
-      <Card className="border-dashed border-border py-16 text-center bg-card shadow-sm rounded-2xl max-w-xl mx-auto">
-        <CardContent className="space-y-5">
-          <div className="h-14 w-14 rounded-2xl bg-primary/5 flex items-center justify-center mx-auto text-primary animate-bounce">
-            <ClipboardList className="h-7 w-7" />
-          </div>
-          <div className="space-y-2">
-            <h3 className="font-bold text-xl text-foreground tracking-tight">
-              No Quiz Attempts Yet
-            </h3>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-              You haven&apos;t attempted any quizzes yet. Head back to the
-              Available Quizzes portal to start your first assessment.
-            </p>
-          </div>
-          <Link href="/dashboard" className="inline-block pt-1">
-            <Button
-              size="sm"
-              className="gap-2 font-semibold shadow-sm px-5 h-9.5"
-            >
-              <Play className="h-3.5 w-3.5 fill-current" /> Go to Available
-              Quizzes
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
+        <div className="rounded-xl border border-border p-4 text-muted-foreground">
+          <ClipboardList className="h-8 w-8" />
+        </div>
+        <div className="space-y-1">
+          <p className="font-semibold text-foreground">No attempts yet</p>
+          <p className="text-sm text-muted-foreground">
+            Head to Available Quizzes to start your first attempt.
+          </p>
+        </div>
+        <Link href="/dashboard">
+          <Button size="sm" variant="outline">
+            Browse Quizzes
+          </Button>
+        </Link>
+      </div>
     );
   }
 
   return (
     <div className="space-y-6">
       {quizGroups.map((group) => (
-        <Card
+        <div
           key={group.quiz_title}
-          className="overflow-hidden border border-border/80 shadow-md rounded-2xl bg-card hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary/80"
+          className="rounded-xl border border-border overflow-hidden"
         >
-          <CardHeader className="px-6 py-4.5 border-b border-border/40 bg-linear-to-r from-muted/20 to-transparent">
-            <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">
-                    {group.quiz_title}
-                  </h2>
-                  <Badge
-                    variant="secondary"
-                    className="text-[10px] font-bold tracking-wider uppercase bg-primary/5 text-primary border border-primary/10 px-2 py-0.5 rounded-full"
-                  >
-                    {group.attempts.length}{" "}
-                    {group.attempts.length === 1 ? "Attempt" : "Attempts"}
-                  </Badge>
-                  {group.results_visible ? (
-                    <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/15 border-none font-bold text-[9px] uppercase rounded-full px-2 py-0.5 flex items-center gap-1">
-                      <Sparkles className="h-2.5 w-2.5" /> Results Released
-                    </Badge>
-                  ) : (
-                    <Badge
-                      variant="outline"
-                      className="text-[9px] font-bold uppercase rounded-full bg-amber-500/5 text-amber-600 border-amber-500/15 px-2 py-0.5"
-                    >
-                      Results Pending
-                    </Badge>
-                  )}
-                </div>
-                {group.quiz_description && (
-                  <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-                    {group.quiz_description}
-                  </CardDescription>
-                )}
-              </div>
+          {/* Quiz Group Header */}
+          <div className="flex items-center justify-between gap-3 border-b border-border bg-muted/30 px-5 py-3.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="font-semibold text-sm text-foreground truncate">
+                {group.quiz_title}
+              </span>
+              <span className="text-xs text-muted-foreground shrink-0">
+                {group.attempts.length}{" "}
+                {group.attempts.length === 1 ? "attempt" : "attempts"}
+              </span>
             </div>
-          </CardHeader>
+            <span
+              className={`text-xs font-medium shrink-0 ${
+                group.results_visible
+                  ? "text-emerald-600"
+                  : "text-amber-600"
+              }`}
+            >
+              {group.results_visible ? "Results released" : "Pending results"}
+            </span>
+          </div>
 
-          <CardContent className="p-6 space-y-3.5">
-            <div className="space-y-3">
-              {group.attempts
-                .slice()
-                .sort((a, b) => b.attempt_number - a.attempt_number)
-                .map((attempt) => {
-                  const isGraded = attempt.status === "graded";
-                  const isPassed = attempt.passed;
-                  const scorePercent =
-                    attempt.score !== null && attempt.total_marks > 0
-                      ? Math.round((attempt.score / attempt.total_marks) * 100)
-                      : null;
+          {/* Description (optional) */}
+          {group.quiz_description && (
+            <div className="px-5 py-2 bg-muted/10 border-b border-border/50">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {group.quiz_description}
+              </p>
+            </div>
+          )}
 
-                  return (
-                    <div
-                      key={attempt.id}
-                      className="rounded-xl border border-border/50 bg-muted/10 hover:bg-muted/20 hover:border-primary/20 px-5 py-4.5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between hover:-translate-y-0.5 transition-all duration-200"
-                    >
-                      <div className="flex items-start gap-4 min-w-0">
-                        <div className="h-11 w-11 shrink-0 rounded-xl bg-linear-to-br from-primary/10 to-primary/5 border border-primary/10 flex items-center justify-center font-extrabold text-sm text-primary shadow-sm">
-                          #{attempt.attempt_number}
-                        </div>
-                        <div className="space-y-1.5 min-w-0">
-                          <div className="flex items-center gap-2.5">
-                            <span className="font-bold text-sm text-foreground tracking-tight">
-                              Attempt Details
-                            </span>
-                            <Badge
-                              variant={
-                                attempt.status === "graded"
-                                  ? "outline"
-                                  : "secondary"
-                              }
-                              className={`text-[9px] uppercase tracking-wider font-extrabold h-5 px-2 py-0 rounded-md ${
-                                attempt.status === "graded"
-                                  ? "bg-violet-500/5 text-violet-600 border-violet-500/10"
-                                  : attempt.status === "in_progress"
-                                    ? "bg-amber-500/5 text-amber-600 border-amber-500/10 animate-pulse"
-                                    : "bg-rose-500/5 text-rose-600 border-rose-500/10"
-                              }`}
-                            >
-                              {attempt.status.replace("_", " ")}
-                            </Badge>
-                          </div>
+          {/* Attempt Rows */}
+          <div className="divide-y divide-border/60">
+            {group.attempts
+              .slice()
+              .sort((a, b) => b.attempt_number - a.attempt_number)
+              .map((attempt) => {
+                const isGraded = attempt.status === "graded";
+                const isInProgress = attempt.status === "in_progress";
+                const scorePercent =
+                  attempt.score !== null && attempt.total_marks > 0
+                    ? Math.round((attempt.score / attempt.total_marks) * 100)
+                    : null;
 
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground font-medium">
-                            <span className="flex items-center gap-1.5">
-                              <Calendar className="h-3.5 w-3.5 text-muted-foreground/60" />
-                              {formatDate(
-                                attempt.submitted_at || attempt.started_at,
-                              )}
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                              <Clock className="h-3.5 w-3.5 text-muted-foreground/60" />
-                              Time taken:{" "}
-                              {formatDuration(attempt.time_taken_seconds)}
-                            </span>
-                          </div>
-                        </div>
+                return (
+                  <div
+                    key={attempt.id}
+                    className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between hover:bg-muted/20 transition-colors"
+                  >
+                    {/* Left: attempt info */}
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-background text-xs font-bold text-muted-foreground">
+                        #{attempt.attempt_number}
                       </div>
-
-                      {/* Right: Score Metric, Result Badge & CTA Action Button */}
-                      <div className="flex flex-wrap items-center justify-between sm:justify-end gap-x-8 gap-y-4 pt-3.5 sm:pt-0 border-t border-border/30 sm:border-none">
-                        {/* Score Metric Ring or Tag */}
-                        <div className="flex items-center gap-3">
-                          <div className="flex flex-col text-right">
-                            <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">
-                              Score
-                            </span>
-                            <span className="text-base font-extrabold text-foreground tracking-tight">
-                              {attempt.score !== null
-                                ? `${attempt.score} / ${attempt.total_marks}`
-                                : "N/A"}
-                            </span>
-                            {scorePercent !== null && (
-                              <span className="text-[10px] text-muted-foreground/75 font-semibold">
-                                {scorePercent}% Score
-                              </span>
-                            )}
-                          </div>
-
-                          {isGraded && group.results_visible && (
-                            <div className="shrink-0">
-                              {isPassed ? (
-                                <Badge className="bg-emerald-500 hover:bg-emerald-500 text-white font-extrabold text-[9px] uppercase gap-1 py-1 px-2.5 rounded-lg shadow-sm border-none">
-                                  <CheckCircle2 className="h-3.5 w-3.5" /> Pass
-                                </Badge>
-                              ) : (
-                                <Badge
-                                  variant="destructive"
-                                  className="font-extrabold text-[9px] uppercase gap-1 py-1 px-2.5 rounded-lg shadow-sm border-none bg-rose-500 hover:bg-rose-500"
-                                >
-                                  <XCircle className="h-3.5 w-3.5" /> Fail
-                                </Badge>
-                              )}
-                            </div>
-                          )}
+                      <div className="space-y-1.5 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-foreground">
+                            Attempt #{attempt.attempt_number}
+                          </span>
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] capitalize px-1.5 py-0 h-4 border-none font-semibold ${
+                              isGraded
+                                ? "bg-violet-50 text-violet-600 dark:bg-violet-950/30"
+                                : isInProgress
+                                  ? "bg-amber-50 text-amber-600 dark:bg-amber-950/30"
+                                  : "bg-muted text-muted-foreground"
+                            }`}
+                          >
+                            {attempt.status.replace("_", " ")}
+                          </Badge>
                         </div>
-
-                        {/* CTA Buttons */}
-                        <div className="shrink-0">
-                          {attempt.status === "graded" ? (
-                            group.results_visible ? (
-                              <Link
-                                href={`/dashboard/quiz/${attempt.quiz_id}/attempt/${attempt.id}`}
-                              >
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-9 text-xs font-bold gap-2 border-border hover:bg-accent hover:text-accent-foreground px-4 rounded-xl shadow-sm transition-all"
-                                >
-                                  Review Answers{" "}
-                                  <ChevronRight className="h-4 w-4" />
-                                </Button>
-                              </Link>
-                            ) : (
-                              <div className="h-9 inline-flex items-center gap-2 text-[11px] font-semibold text-amber-600 bg-amber-500/5 px-3.5 rounded-xl border border-amber-500/10">
-                                <Timer className="h-3.5 w-3.5 animate-pulse" />{" "}
-                                Pending Release
-                              </div>
-                            )
-                          ) : attempt.status === "in_progress" ? (
-                            <Link href={`/quiz/${attempt.quiz_id}`}>
-                              <Button
-                                size="sm"
-                                className="h-9 text-xs font-bold gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-md px-4 rounded-xl"
-                              >
-                                <Play className="h-3.5 w-3.5 fill-current" />{" "}
-                                Continue
-                              </Button>
-                            </Link>
-                          ) : (
-                            <Badge
-                              variant="outline"
-                              className="text-xs py-1 px-3"
-                            >
-                              Awaiting Grading
-                            </Badge>
-                          )}
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {formatDate(attempt.submitted_at || attempt.started_at)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {formatDuration(attempt.time_taken_seconds)}
+                          </span>
                         </div>
                       </div>
                     </div>
-                  );
-                })}
-            </div>
-          </CardContent>
-        </Card>
+
+                    {/* Right: score + action */}
+                    <div className="flex items-center gap-4 pl-10 sm:pl-0">
+                      {/* Score */}
+                      {attempt.score !== null ? (
+                        <div className="text-right">
+                          <p className="text-base font-bold text-foreground leading-none">
+                            {attempt.score}
+                            <span className="text-xs font-normal text-muted-foreground">
+                              /{attempt.total_marks}
+                            </span>
+                          </p>
+                          {scorePercent !== null && (
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                              {scorePercent}%
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-right">
+                          <p className="text-sm text-muted-foreground">—</p>
+                        </div>
+                      )}
+
+                      {/* Pass/Fail */}
+                      {isGraded && group.results_visible && (
+                        <div className="shrink-0">
+                          {attempt.passed ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              Pass
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-destructive">
+                              <XCircle className="h-3.5 w-3.5" />
+                              Fail
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Action button */}
+                      <div className="shrink-0">
+                        {isGraded ? (
+                          group.results_visible ? (
+                            <Link
+                              href={`/dashboard/quiz/${attempt.quiz_id}/attempt/${attempt.id}`}
+                            >
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8 text-xs gap-1.5"
+                              >
+                                Review Answers
+                                <ChevronRight className="h-3.5 w-3.5" />
+                              </Button>
+                            </Link>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">
+                              Pending release
+                            </span>
+                          )
+                        ) : isInProgress ? (
+                          <Link href={`/quiz/${attempt.quiz_id}`}>
+                            <Button size="sm" className="h-8 text-xs gap-1.5">
+                              <Play className="h-3 w-3 fill-current" />
+                              Continue
+                            </Button>
+                          </Link>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            Awaiting grading
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        </div>
       ))}
     </div>
   );
