@@ -174,6 +174,13 @@ export async function createQuestionRequest(
   await axiosClient.post(`/admin/quiz/${quizId}/questions`, payload);
 }
 
+export async function bulkUploadQuestionsRequest(
+  quizId: number,
+  payload: CreateQuestionPayload[],
+): Promise<void> {
+  await axiosClient.post(`/admin/quiz/${quizId}/questions/bulk`, payload);
+}
+
 export async function deleteQuestionRequest(questionId: number): Promise<void> {
   await axiosClient.delete(`/admin/questions/${questionId}`);
 }

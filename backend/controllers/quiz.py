@@ -1,4 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
 from sqlalchemy import select, update, func, text
 from sqlalchemy.orm import selectinload
 from models.quiz import Category, Quiz, Question, Option, QuizStatus
@@ -206,6 +207,50 @@ async def create_question(db: AsyncSession, quiz_id: int, question_in: QuestionC
 
     await recalculate_quiz_total_marks(db, quiz_id)
     return await get_question_by_id(db, new_q_id)
+
+async def create_questions_bulk(db: AsyncSession, quiz_id: int, questions_in: List[QuestionCreate]) -> List[Question]:
+    quiz = await get_quiz_by_id(db, quiz_id)
+    if quiz.results_visible:
+        raise QuizStatusError("Cannot edit questions after results have been released.")
+
+    created_questions = []
+
+    for q_in in questions_in:
+        options_data = q_in.options
+
+        new_q = Question(
+            quiz_id=quiz_id,
+            text=q_in.text,
+            type=q_in.type,
+            marks=q_in.marks,
+            order=q_in.order,
+            explanation=q_in.explanation,
+            image_url=q_in.image_url
+        )
+        db.add(new_q)
+        await db.flush()
+
+        if options_data:
+            for opt_in in options_data:
+                new_opt = Option(
+                    question_id=new_q.id,
+                    text=opt_in.text,
+                    is_correct=opt_in.is_correct,
+                    order=opt_in.order,
+                )
+                db.add(new_opt)
+
+        created_questions.append(new_q)
+
+    await db.commit()
+    await recalculate_quiz_total_marks(db, quiz_id)
+
+    reloaded_questions = []
+    for cq in created_questions:
+        rq = await get_question_by_id(db, cq.id)
+        reloaded_questions.append(rq)
+
+    return reloaded_questions
 
 async def update_question(db: AsyncSession, question_id: int, question_in: QuestionCreate) -> Question:
     query = select(Question).filter(Question.id == question_id)

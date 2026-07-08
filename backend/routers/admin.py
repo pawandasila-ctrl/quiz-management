@@ -147,6 +147,13 @@ async def add_question(id: int, question_in: QuestionCreate, db: DbSession):
     except PracticeException as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
+@router.post("/quiz/{id}/questions/bulk", response_model=List[QuestionResponse], status_code=status.HTTP_201_CREATED)
+async def add_questions_bulk(id: int, questions_in: List[QuestionCreate], db: DbSession):
+    try:
+        return await quiz_controller.create_questions_bulk(db, id, questions_in)
+    except PracticeException as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
+
 @router.put("/questions/{id}", response_model=QuestionResponse)
 async def update_question(id: int, question_in: QuestionCreate, db: DbSession):
     try:

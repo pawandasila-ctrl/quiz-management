@@ -20,6 +20,7 @@ import {
   closeQuizRequest,
   releaseResultsRequest,
   createQuestionRequest,
+  bulkUploadQuestionsRequest,
   deleteQuestionRequest,
   deleteCategoryRequest,
   deleteAttemptRequest,
@@ -28,7 +29,7 @@ import {
   CreateQuizPayload,
   CreateCategoryPayload,
   CreateQuestionPayload,
-} from "../actions";
+} from "@/modules/quiz/actions";
 import { Quiz, Category, QuizAttempt, LeaderboardEntry, AnswerState } from "../types";
 import { User, UserRole } from "../../auth/types";
 
@@ -238,6 +239,19 @@ export function useCreateQuestion(quizId: number) {
   const queryClient = useQueryClient();
   return useMutation<void, Error, CreateQuestionPayload>({
     mutationFn: (payload) => createQuestionRequest(quizId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin-quiz-details", quizId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-quizzes"] });
+    },
+  });
+}
+
+export function useBulkUploadQuestions(quizId: number) {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, CreateQuestionPayload[]>({
+    mutationFn: (payload) => bulkUploadQuestionsRequest(quizId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["admin-quiz-details", quizId],
