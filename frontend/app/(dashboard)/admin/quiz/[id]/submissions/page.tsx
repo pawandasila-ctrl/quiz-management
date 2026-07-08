@@ -4,6 +4,7 @@ import SubmissionsTableClient from "@/components/review/SubmissionsTableClient";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  [key: string]: any;
 }
 
 export default async function AdminQuizSubmissionsPage({ params }: PageProps) {
