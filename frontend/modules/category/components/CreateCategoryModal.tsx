@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useCreateCategory } from "@/modules/quiz/hooks";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,28 +44,30 @@ export default function CreateCategoryModal({ onClose }: CreateCategoryModalProp
   );
 
   return (
-    <Card className="border-border bg-accent/15 max-w-md">
-      <form onSubmit={handleSubmit}>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">New Category</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 pb-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="cat-name" className="text-xs">Category Name</Label>
-            <Input id="cat-name" className="h-8" value={catName} onChange={(e) => setCatName(e.target.value)} placeholder="e.g. Mathematics" />
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="border-border bg-card max-w-sm p-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <DialogHeader>
+            <DialogTitle className="text-base font-semibold">New Category</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="cat-name" className="text-xs">Category Name</Label>
+              <Input id="cat-name" className="h-9" value={catName} onChange={(e) => setCatName(e.target.value)} placeholder="e.g. Mathematics" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="cat-desc" className="text-xs">Description</Label>
+              <Input id="cat-desc" className="h-9" value={catDesc} onChange={(e) => setCatDesc(e.target.value)} placeholder="Short summary" />
+            </div>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="cat-desc" className="text-xs">Description</Label>
-            <Input id="cat-desc" className="h-8" value={catDesc} onChange={(e) => setCatDesc(e.target.value)} placeholder="Short summary" />
+          <div className="flex justify-end gap-2 pt-1">
+            <Button variant="ghost" size="sm" type="button" onClick={onClose}>Cancel</Button>
+            <Button size="sm" type="submit" disabled={createCategoryMutation.isPending}>
+              {createCategoryMutation.isPending ? "Adding..." : "Add"}
+            </Button>
           </div>
-        </CardContent>
-        <CardContent className="flex justify-end gap-2 pt-0">
-          <Button variant="ghost" size="sm" type="button" onClick={onClose}>Cancel</Button>
-          <Button size="sm" type="submit" disabled={createCategoryMutation.isPending}>
-            {createCategoryMutation.isPending ? "Adding..." : "Add"}
-          </Button>
-        </CardContent>
-      </form>
-    </Card>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
