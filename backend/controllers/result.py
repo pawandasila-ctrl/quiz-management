@@ -411,13 +411,13 @@ async def re_grade_quiz_attempts(db: AsyncSession, quiz_id: int) -> None:
     # 1. Update all answers of the quiz to match current correct options
     await db.execute(
         text(
-            "UPDATE answers a "
+            "UPDATE answers "
             "SET "
-            "  is_correct = (a.selected_option_id = o.id), "
-            "  marks_awarded = CASE WHEN a.selected_option_id = o.id THEN q.marks ELSE 0 END "
+            "  is_correct = (selected_option_id = o.id), "
+            "  marks_awarded = CASE WHEN selected_option_id = o.id THEN q.marks ELSE 0 END "
             "FROM questions q "
             "JOIN options o ON o.question_id = q.id AND o.is_correct = true "
-            "WHERE a.question_id = q.id AND q.quiz_id = :qid"
+            "WHERE answers.question_id = q.id AND q.quiz_id = :qid"
         ),
         {"qid": quiz_id}
     )
