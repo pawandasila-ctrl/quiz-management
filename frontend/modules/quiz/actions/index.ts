@@ -196,3 +196,10 @@ export async function deleteAttemptRequest(attemptId: number): Promise<void> {
 export async function deleteQuizRequest(quizId: number): Promise<void> {
   await axiosClient.delete(`/admin/quiz/${quizId}`);
 }
+
+export async function updateQuestionRequest(
+  questionId: number,
+  payload: CreateQuestionPayload,
+): Promise<void> {
+  await axiosClient.put(`/admin/questions/${questionId}`, payload);
+}

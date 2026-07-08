@@ -6,11 +6,12 @@ import { Question } from "@/modules/quiz/types";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, CheckCircle } from "lucide-react";
+import { Trash2, CheckCircle, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
 
 import ConfirmDialog from "@/components/ConfirmDialog";
+import EditQuestionModal from "./EditQuestionModal";
 
 interface QuestionCardProps {
   quizId: number;
@@ -27,6 +28,7 @@ export const QuestionCard = React.memo(function QuestionCard({
 }: QuestionCardProps) {
   const deleteQuestionMutation = useDeleteQuestion(quizId);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
 
   const handleDelete = useCallback(() => {
     deleteQuestionMutation.mutate(question.id, {
@@ -40,7 +42,8 @@ export const QuestionCard = React.memo(function QuestionCard({
   }, [deleteQuestionMutation, question.id]);
 
   return (
-    <Card className="border-border shadow-sm">
+    <>
+      <Card className="border-border shadow-sm">
       <CardHeader className="pb-3 flex flex-row items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
@@ -76,27 +79,38 @@ export const QuestionCard = React.memo(function QuestionCard({
           )}
         </div>
         {isDraft && (
-          <ConfirmDialog
-            isOpen={showDeleteConfirm}
-            onOpenChange={setShowDeleteConfirm}
-            title="Delete Question"
-            description="Are you sure you want to delete this question? This action cannot be undone."
-            onConfirm={handleDelete}
-            confirmText="Delete"
-            variant="destructive"
-            isLoading={deleteQuestionMutation.isPending}
-            trigger={
-              <Button
-                variant="ghost"
-                size="icon"
-                disabled={deleteQuestionMutation.isPending}
-                onClick={() => setShowDeleteConfirm(true)}
-                className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-md"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            }
-          />
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowEdit(true)}
+              className="text-muted-foreground hover:text-foreground hover:bg-muted rounded-md h-8 w-8"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+
+            <ConfirmDialog
+              isOpen={showDeleteConfirm}
+              onOpenChange={setShowDeleteConfirm}
+              title="Delete Question"
+              description="Are you sure you want to delete this question? This action cannot be undone."
+              onConfirm={handleDelete}
+              confirmText="Delete"
+              variant="destructive"
+              isLoading={deleteQuestionMutation.isPending}
+              trigger={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={deleteQuestionMutation.isPending}
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-md h-8 w-8"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              }
+            />
+          </div>
         )}
       </CardHeader>
       <CardContent className="space-y-2 border-t border-border pt-4 text-sm text-muted-foreground">
@@ -126,7 +140,16 @@ export const QuestionCard = React.memo(function QuestionCard({
           </div>
         )}
       </CardContent>
-    </Card>
+      </Card>
+
+      {showEdit && (
+        <EditQuestionModal
+          quizId={quizId}
+          question={question}
+          onClose={() => setShowEdit(false)}
+        />
+      )}
+    </>
   );
 });
 

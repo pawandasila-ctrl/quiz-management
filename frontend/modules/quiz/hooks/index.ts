@@ -21,6 +21,7 @@ import {
   releaseResultsRequest,
   createQuestionRequest,
   bulkUploadQuestionsRequest,
+  updateQuestionRequest,
   deleteQuestionRequest,
   deleteCategoryRequest,
   deleteAttemptRequest,
@@ -252,6 +253,19 @@ export function useBulkUploadQuestions(quizId: number) {
   const queryClient = useQueryClient();
   return useMutation<void, Error, CreateQuestionPayload[]>({
     mutationFn: (payload) => bulkUploadQuestionsRequest(quizId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin-quiz-details", quizId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin-quizzes"] });
+    },
+  });
+}
+
+export function useUpdateQuestion(quizId: number) {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, { questionId: number; payload: CreateQuestionPayload }>({
+    mutationFn: ({ questionId, payload }) => updateQuestionRequest(questionId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["admin-quiz-details", quizId],
