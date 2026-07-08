@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text
 from sqlalchemy.orm import selectinload, joinedload
 from models.quiz import Quiz, Question, Option, QuizStatus
 from models.user import User, UserRole
@@ -399,58 +399,49 @@ async def re_grade_quiz_attempts(db: AsyncSession, quiz_id: int) -> None:
     """
     Recalculates scores, correctness of answers, and pass/fail status
     for all submitted attempts of a quiz after questions/options were updated.
+    Executed entirely database-side using optimized bulk SQL updates.
     """
-    query_q = select(Question).options(selectinload(Question.options)).filter(Question.quiz_id == quiz_id)
-    q_res = await db.execute(query_q)
-    questions = q_res.scalars().all()
-    
-    correct_map = {}
-    for q in questions:
-        correct_opt = next((opt for opt in q.options if opt.is_correct), None)
-        correct_map[q.id] = {
-            "correct_option_id": correct_opt.id if correct_opt else None,
-            "marks": q.marks
-        }
-
+    # Fetch quiz to get total_marks and pass_mark
     query_quiz = select(Quiz).filter(Quiz.id == quiz_id)
     quiz_res = await db.execute(query_quiz)
     quiz = quiz_res.scalars().first()
     if not quiz:
         return
 
-    query_attempts = select(QuizAttempt).options(
-        selectinload(QuizAttempt.answers)
-    ).filter(
-        QuizAttempt.quiz_id == quiz_id,
-        QuizAttempt.status != AttemptStatus.IN_PROGRESS
+    # 1. Update all answers of the quiz to match current correct options
+    await db.execute(
+        text(
+            "UPDATE answers a "
+            "SET "
+            "  is_correct = (a.selected_option_id = o.id), "
+            "  marks_awarded = CASE WHEN a.selected_option_id = o.id THEN q.marks ELSE 0 END "
+            "FROM questions q "
+            "JOIN options o ON o.question_id = q.id AND o.is_correct = true "
+            "WHERE a.question_id = q.id AND q.quiz_id = :qid"
+        ),
+        {"qid": quiz_id}
     )
-    attempts_res = await db.execute(query_attempts)
-    attempts = attempts_res.scalars().all()
 
-    for attempt in attempts:
-        total_score = 0
-        for ans in attempt.answers:
-            q_info = correct_map.get(ans.question_id)
-            if (
-                q_info
-                and q_info["correct_option_id"] is not None
-                and ans.selected_option_id == q_info["correct_option_id"]
-            ):
-                ans.is_correct = True
-                ans.marks_awarded = q_info["marks"]
-                total_score += q_info["marks"]
-            else:
-                ans.is_correct = False
-                ans.marks_awarded = 0
-            db.add(ans)
-
-        attempt.score = total_score
-        if quiz.total_marks > 0:
-            student_percentage = (total_score / quiz.total_marks) * 100
-            attempt.passed = student_percentage >= quiz.pass_mark
-        else:
-            attempt.passed = True
-        
-        db.add(attempt)
+    # 2. Recalculate scores and pass/fail status for all submitted attempts of the quiz
+    await db.execute(
+        text(
+            "UPDATE quiz_attempts qa "
+            "SET "
+            "  score = (SELECT COALESCE(SUM(marks_awarded), 0) FROM answers WHERE attempt_id = qa.id), "
+            "  passed = ( "
+            "    CASE WHEN :total_marks > 0 THEN "
+            "      ((SELECT COALESCE(SUM(marks_awarded), 0) FROM answers WHERE attempt_id = qa.id) * 100.0 / :total_marks) >= :pass_mark "
+            "    ELSE "
+            "      true "
+            "    END "
+            "  ) "
+            "WHERE qa.quiz_id = :qid AND qa.status != 'in_progress'"
+        ),
+        {
+            "qid": quiz_id,
+            "total_marks": quiz.total_marks,
+            "pass_mark": quiz.pass_mark
+        }
+    )
 
     await db.commit()

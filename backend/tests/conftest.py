@@ -5,7 +5,6 @@ from os.path import dirname, abspath
 import pytest
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from config.limiter import limiter
 # Add backend directory to sys.path
 sys.path.insert(0, dirname(dirname(abspath(__file__))))
 
@@ -64,7 +63,7 @@ async def client(db_session):
     # Override get_db in the main app
     app.dependency_overrides[get_db] = override_get_db
     
-    
+    from config.limiter import limiter
     limiter.enabled = False
     
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test/api") as ac:
