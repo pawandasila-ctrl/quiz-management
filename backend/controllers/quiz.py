@@ -253,11 +253,7 @@ async def create_questions_bulk(db: AsyncSession, quiz_id: int, questions_in: Li
     return reloaded_questions
 
 async def update_question(db: AsyncSession, question_id: int, question_in: QuestionCreate) -> Question:
-    query = select(Question).filter(Question.id == question_id)
-    result = await db.execute(query)
-    question = result.scalars().first()
-    if not question:
-        raise QuestionNotFoundError()
+    question = await get_question_by_id(db, question_id)
 
     quiz = await get_quiz_by_id(db, question.quiz_id)
     if quiz.results_visible:
@@ -271,6 +267,30 @@ async def update_question(db: AsyncSession, question_id: int, question_in: Quest
     question.image_url = question_in.image_url
 
     db.add(question)
+
+    existing_options = {opt.order: opt for opt in question.options}
+    new_orders = {opt_in.order for opt_in in question_in.options} if question_in.options else set()
+
+    if question_in.options:
+        for opt_in in question_in.options:
+            if opt_in.order in existing_options:
+                opt = existing_options[opt_in.order]
+                opt.text = opt_in.text
+                opt.is_correct = opt_in.is_correct
+                db.add(opt)
+            else:
+                new_opt = Option(
+                    question_id=question_id,
+                    text=opt_in.text,
+                    is_correct=opt_in.is_correct,
+                    order=opt_in.order
+                )
+                db.add(new_opt)
+
+    for order, opt in existing_options.items():
+        if order not in new_orders:
+            await db.delete(opt)
+
     await db.commit()
     
     await recalculate_quiz_total_marks(db, question.quiz_id)
