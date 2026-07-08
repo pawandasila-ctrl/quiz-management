@@ -42,9 +42,16 @@ export default function LoginForm() {
       } catch (err: unknown) {
         let errorMessage = "Incorrect email or password.";
         if (err && typeof err === "object" && "response" in err) {
-          const responseErr = err as { response?: { data?: { detail?: string } } };
-          if (responseErr.response?.data?.detail) {
-            errorMessage = responseErr.response.data.detail;
+          const responseErr = err as { response?: { data?: { detail?: string | { msg?: string }[] } } };
+          const detail = responseErr.response?.data?.detail;
+          if (detail) {
+            if (typeof detail === "string") {
+              errorMessage = detail;
+            } else if (Array.isArray(detail)) {
+              errorMessage = detail.map((d: { msg?: string }) => d.msg || JSON.stringify(d)).join(", ");
+            } else {
+              errorMessage = JSON.stringify(detail);
+            }
           }
         } else if (err && typeof err === "object" && "request" in err) {
           errorMessage = "Could not reach the server. Please check your connection and try again.";
