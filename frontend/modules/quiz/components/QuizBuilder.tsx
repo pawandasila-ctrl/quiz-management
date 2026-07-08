@@ -23,11 +23,13 @@ import {
   Lock,
   CheckCircle2,
   FileQuestion,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import QuestionCard from "@/modules/questions/components/QuestionCard";
 import AddQuestionModal from "@/modules/questions/components/AddQuestionModal";
+import BulkUploadModal from "@/modules/questions/components/BulkUploadModal";
 import { QuizStatus } from "../types";
 
 interface QuizBuilderProps {
@@ -57,6 +59,7 @@ const STATUS_CONFIG: Record<
 
 export default function QuizBuilder({ quizId }: QuizBuilderProps) {
   const [showAddQuestion, setShowAddQuestion] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
 
   const { data: quiz, isLoading, error } = useAdminQuizDetails(quizId);
   const publishMutation = usePublishQuiz();
@@ -67,6 +70,7 @@ export default function QuizBuilder({ quizId }: QuizBuilderProps) {
     [quiz?.status],
   );
   const isDraft = quiz?.status === "draft";
+  const canEdit = quiz ? !quiz.results_visible : false;
   const questions = useMemo(() => quiz?.questions ?? [], [quiz?.questions]);
 
   const handlePublish = useCallback(() => {
@@ -168,15 +172,26 @@ export default function QuizBuilder({ quizId }: QuizBuilderProps) {
             </Button>
           )}
 
-          {isDraft && (
-            <Button
-              size="sm"
-              onClick={() => setShowAddQuestion(true)}
-              className="gap-1.5 h-8 text-xs"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Add Question
-            </Button>
+          {canEdit && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowBulkUpload(true)}
+                className="gap-1.5 h-8 text-xs border-border"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                Bulk Upload
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setShowAddQuestion(true)}
+                className="gap-1.5 h-8 text-xs"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Question
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -271,16 +286,27 @@ export default function QuizBuilder({ quizId }: QuizBuilderProps) {
               </span>
             </h3>
           </div>
-          {isDraft && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowAddQuestion(true)}
-              className="gap-1.5 h-8 text-xs border-border"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Add Question
-            </Button>
+          {canEdit && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowBulkUpload(true)}
+                className="gap-1.5 h-8 text-xs border-border"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                Bulk Upload
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAddQuestion(true)}
+                className="gap-1.5 h-8 text-xs border-border"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Question
+              </Button>
+            </div>
           )}
         </div>
 
@@ -297,15 +323,26 @@ export default function QuizBuilder({ quizId }: QuizBuilderProps) {
                   : "This quiz has no questions."}
               </p>
             </div>
-            {isDraft && (
-              <Button
-                size="sm"
-                onClick={() => setShowAddQuestion(true)}
-                className="gap-1.5 mt-1"
-              >
-                <Plus className="h-4 w-4" />
-                Add First Question
-              </Button>
+            {canEdit && (
+              <div className="flex items-center gap-2 mt-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowBulkUpload(true)}
+                  className="gap-1.5"
+                >
+                  <Upload className="h-4 w-4" />
+                  Bulk Upload
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setShowAddQuestion(true)}
+                  className="gap-1.5"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add First Question
+                </Button>
+              </div>
             )}
           </div>
         ) : (
@@ -316,7 +353,7 @@ export default function QuizBuilder({ quizId }: QuizBuilderProps) {
                 quizId={quizId}
                 question={q}
                 index={idx}
-                isDraft={isDraft}
+                isDraft={canEdit}
               />
             ))}
 
@@ -358,6 +395,13 @@ export default function QuizBuilder({ quizId }: QuizBuilderProps) {
         <AddQuestionModal
           quizId={quizId}
           onClose={() => setShowAddQuestion(false)}
+        />
+      )}
+
+      {showBulkUpload && (
+        <BulkUploadModal
+          quizId={quizId}
+          onClose={() => setShowBulkUpload(false)}
         />
       )}
     </div>

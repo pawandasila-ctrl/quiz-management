@@ -174,8 +174,8 @@ async def release_results(db: AsyncSession, quiz_id: int) -> Quiz:
 async def create_question(db: AsyncSession, quiz_id: int, question_in: QuestionCreate) -> Question:
     
     quiz = await get_quiz_by_id(db, quiz_id)
-    if quiz.status != QuizStatus.DRAFT:
-        raise QuizStatusError("Cannot edit questions unless the quiz is in DRAFT status.")
+    if quiz.results_visible:
+        raise QuizStatusError("Cannot edit questions after results have been released.")
 
     options_data = question_in.options
 
@@ -215,8 +215,8 @@ async def update_question(db: AsyncSession, question_id: int, question_in: Quest
         raise QuestionNotFoundError()
 
     quiz = await get_quiz_by_id(db, question.quiz_id)
-    if quiz.status != QuizStatus.DRAFT:
-        raise QuizStatusError("Cannot edit questions unless the quiz is in DRAFT status.")
+    if quiz.results_visible:
+        raise QuizStatusError("Cannot edit questions after results have been released.")
 
     question.text = question_in.text
     question.type = question_in.type
@@ -239,8 +239,8 @@ async def delete_question(db: AsyncSession, question_id: int) -> None:
         raise QuestionNotFoundError()
 
     quiz = await get_quiz_by_id(db, question.quiz_id)
-    if quiz.status != QuizStatus.DRAFT:
-        raise QuizStatusError("Cannot edit questions unless the quiz is in DRAFT status.")
+    if quiz.results_visible:
+        raise QuizStatusError("Cannot edit questions after results have been released.")
 
     quiz_id = question.quiz_id
     await db.delete(question)
@@ -257,8 +257,8 @@ async def create_option(db: AsyncSession, question_id: int, option_in: OptionCre
         raise QuestionNotFoundError()
 
     quiz = await get_quiz_by_id(db, question.quiz_id)
-    if quiz.status != QuizStatus.DRAFT:
-        raise QuizStatusError("Cannot edit options unless the quiz is in DRAFT status.")
+    if quiz.results_visible:
+        raise QuizStatusError("Cannot edit options after results have been released.")
 
     new_opt = Option(
         question_id=question_id,
@@ -284,8 +284,8 @@ async def update_option(db: AsyncSession, option_id: int, option_in: OptionCreat
     question = res_q.scalars().first()
     
     quiz = await get_quiz_by_id(db, question.quiz_id)
-    if quiz.status != QuizStatus.DRAFT:
-        raise QuizStatusError("Cannot edit options unless the quiz is in DRAFT status.")
+    if quiz.results_visible:
+        raise QuizStatusError("Cannot edit options after results have been released.")
 
     option.text = option_in.text
     option.is_correct = option_in.is_correct
@@ -308,8 +308,8 @@ async def delete_option(db: AsyncSession, option_id: int) -> None:
     question = res_q.scalars().first()
     
     quiz = await get_quiz_by_id(db, question.quiz_id)
-    if quiz.status != QuizStatus.DRAFT:
-        raise QuizStatusError("Cannot edit options unless the quiz is in DRAFT status.")
+    if quiz.results_visible:
+        raise QuizStatusError("Cannot edit options after results have been released.")
 
     await db.delete(option)
     await db.commit()
