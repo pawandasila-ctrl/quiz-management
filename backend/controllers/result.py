@@ -408,7 +408,6 @@ async def re_grade_quiz_attempts(db: AsyncSession, quiz_id: int) -> None:
     if not quiz:
         return
 
-    # 1. Update all answers of the quiz to match current correct options
     await db.execute(
         text(
             "UPDATE answers "
