@@ -446,3 +446,146 @@ async def test_category_and_attempt_deletion(client, db_session):
     # Try to delete again
     del_cat_again = await client.delete(f"/admin/categories/{cat_id}")
     assert del_cat_again.status_code == 400
+
+
+async def test_bulk_questions_upload(client, db_session):
+    admin_in = UserCreate(
+        name="Admin Bulk Tester",
+        email="adminbulk@example.com",
+        password="adminpassword123"
+    )
+    admin_user = await user_controller.create_user(db_session, admin_in)
+    await user_controller.update_user_role(db_session, admin_user.id, UserRole.ADMIN)
+
+    await client.post("/auth/login", json={
+        "email": "adminbulk@example.com",
+        "password": "adminpassword123"
+    })
+
+    # Create Quiz
+    quiz_res = await client.post("/admin/quiz", json={
+        "title": "Bulk Quiz",
+        "description": "Bulk Description",
+        "time_limit_minutes": 10,
+        "pass_mark": 1,
+        "shuffle_questions": False,
+        "max_attempts": 1
+    })
+    assert quiz_res.status_code == 201
+    quiz_id = quiz_res.json()["id"]
+
+    # Bulk upload questions
+    bulk_res = await client.post(f"/admin/quiz/{quiz_id}/questions/bulk", json=[
+        {
+            "text": "Bulk Q1",
+            "type": "mcq",
+            "marks": 4,
+            "order": 1,
+            "options": [
+                {"text": "A", "is_correct": True, "order": 1},
+                {"text": "B", "is_correct": False, "order": 2}
+            ]
+        },
+        {
+            "text": "Bulk Q2",
+            "type": "true_false",
+            "marks": 3,
+            "order": 2,
+            "options": [
+                {"text": "True", "is_correct": False, "order": 1},
+                {"text": "False", "is_correct": True, "order": 2}
+            ]
+        }
+    ])
+    assert bulk_res.status_code == 201
+    data = bulk_res.json()
+    assert len(data) == 2
+    assert data[0]["text"] == "Bulk Q1"
+    assert data[0]["marks"] == 4
+    assert len(data[0]["options"]) == 2
+    assert data[1]["text"] == "Bulk Q2"
+    assert data[1]["marks"] == 3
+
+    # Check total marks recalculated
+    quiz_details = await client.get(f"/admin/quiz/{quiz_id}")
+    assert quiz_details.status_code == 200
+    assert quiz_details.json()["total_marks"] == 7
+
+
+async def test_edit_published_quiz_until_results_released(client, db_session):
+    admin_in = UserCreate(
+        name="Admin Edit Tester",
+        email="adminedit@example.com",
+        password="adminpassword123"
+    )
+    admin_user = await user_controller.create_user(db_session, admin_in)
+    await user_controller.update_user_role(db_session, admin_user.id, UserRole.ADMIN)
+
+    await client.post("/auth/login", json={
+        "email": "adminedit@example.com",
+        "password": "adminpassword123"
+    })
+
+    # Create Quiz
+    quiz_res = await client.post("/admin/quiz", json={
+        "title": "Edit Quiz",
+        "description": "Edit Description",
+        "time_limit_minutes": 10,
+        "pass_mark": 1,
+        "shuffle_questions": False,
+        "max_attempts": 1
+    })
+    quiz_id = quiz_res.json()["id"]
+
+    # Create initial question
+    q_res = await client.post(f"/admin/quiz/{quiz_id}/questions", json={
+        "text": "Q1",
+        "type": "true_false",
+        "marks": 2,
+        "order": 1,
+        "options": [
+            {"text": "True", "is_correct": True, "order": 1},
+            {"text": "False", "is_correct": False, "order": 2}
+        ]
+    })
+    q_id = q_res.json()["id"]
+
+    # Publish Quiz
+    pub_res = await client.post(f"/admin/quiz/{quiz_id}/publish")
+    assert pub_res.status_code == 200
+
+    # Try to edit question while published but results not released (should succeed!)
+    edit_res = await client.put(f"/admin/questions/{q_id}", json={
+        "text": "Q1 Updated",
+        "type": "true_false",
+        "marks": 5,
+        "order": 1,
+        "options": [
+            {"text": "True", "is_correct": True, "order": 1},
+            {"text": "False", "is_correct": False, "order": 2}
+        ]
+    })
+    assert edit_res.status_code == 200
+    assert edit_res.json()["text"] == "Q1 Updated"
+
+    # Close Quiz
+    close_res = await client.post(f"/admin/quiz/{quiz_id}/close")
+    assert close_res.status_code == 200
+
+    # Release Results (releases the answers, results_visible = True)
+    rel_res = await client.post(f"/admin/quiz/{quiz_id}/release-results")
+    assert rel_res.status_code == 200
+
+    # Try to edit question after releasing results (should fail!)
+    edit_fail_res = await client.put(f"/admin/questions/{q_id}", json={
+        "text": "Q1 Fails",
+        "type": "true_false",
+        "marks": 10,
+        "order": 1,
+        "options": [
+            {"text": "True", "is_correct": True, "order": 1},
+            {"text": "False", "is_correct": False, "order": 2}
+        ]
+    })
+    assert edit_fail_res.status_code == 400
+    assert "Cannot edit questions after results have been released" in edit_fail_res.json()["detail"]
