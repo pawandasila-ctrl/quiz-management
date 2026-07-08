@@ -1,10 +1,14 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 from sqlalchemy import Column, DateTime, Enum, Integer, ForeignKey, UniqueConstraint, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from config.database import Base
 import enum
+
+if TYPE_CHECKING:
+    from models.quiz import Quiz, Question, Option
+    from models.user import User
 
 class AttemptStatus(str, enum.Enum):
     IN_PROGRESS = 'in_progress'

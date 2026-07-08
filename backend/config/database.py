@@ -7,6 +7,8 @@ from pathlib import Path
 from sqlalchemy.exc import OperationalError
 from typing import Annotated
 from fastapi import Depends
+from sqlalchemy.orm import DeclarativeBase
+
 
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
@@ -56,7 +58,6 @@ SessionLocal = async_sessionmaker(
     class_=AsyncSession
 )
 
-from sqlalchemy.orm import DeclarativeBase
 
 class Base(DeclarativeBase):
     pass

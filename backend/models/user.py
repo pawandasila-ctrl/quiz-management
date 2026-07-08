@@ -1,10 +1,14 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 from sqlalchemy import Boolean, DateTime, Enum, Integer, String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from config.database import Base
 import enum
+
+if TYPE_CHECKING:
+    from models.quiz import Quiz
+    from models.result import QuizAttempt, Enrollment
 
 class UserRole(str, enum.Enum):
     ADMIN = 'admin'
