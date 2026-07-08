@@ -8,6 +8,8 @@ from utils.exceptions import (
     QuizNotFoundError, QuizStatusError, CategoryNotFoundError,
     QuestionNotFoundError, OptionNotFoundError
 )
+from controllers.result import re_grade_quiz_attempts
+
 from datetime import datetime, timezone
 
 # ── Recalculate helper ───────────────────────────────────────────────────────
@@ -206,6 +208,7 @@ async def create_question(db: AsyncSession, quiz_id: int, question_in: QuestionC
       await db.commit()
 
     await recalculate_quiz_total_marks(db, quiz_id)
+    await re_grade_quiz_attempts(db, quiz_id)
     return await get_question_by_id(db, new_q_id)
 
 async def create_questions_bulk(db: AsyncSession, quiz_id: int, questions_in: List[QuestionCreate]) -> List[Question]:
@@ -244,6 +247,8 @@ async def create_questions_bulk(db: AsyncSession, quiz_id: int, questions_in: Li
 
     await db.commit()
     await recalculate_quiz_total_marks(db, quiz_id)
+    from controllers.result import re_grade_quiz_attempts
+    await re_grade_quiz_attempts(db, quiz_id)
 
     reloaded_questions = []
     for cq in created_questions:
@@ -294,6 +299,8 @@ async def update_question(db: AsyncSession, question_id: int, question_in: Quest
     await db.commit()
     
     await recalculate_quiz_total_marks(db, question.quiz_id)
+    from controllers.result import re_grade_quiz_attempts
+    await re_grade_quiz_attempts(db, question.quiz_id)
     return await get_question_by_id(db, question_id)
 
 async def delete_question(db: AsyncSession, question_id: int) -> None:
@@ -312,6 +319,8 @@ async def delete_question(db: AsyncSession, question_id: int) -> None:
     await db.commit()
     
     await recalculate_quiz_total_marks(db, quiz_id)
+    from controllers.result import re_grade_quiz_attempts
+    await re_grade_quiz_attempts(db, quiz_id)
 
 # ── Option Controller ────────────────────────────────────────────────────────
 async def create_option(db: AsyncSession, question_id: int, option_in: OptionCreate) -> Option:
@@ -334,6 +343,8 @@ async def create_option(db: AsyncSession, question_id: int, option_in: OptionCre
     db.add(new_opt)
     await db.commit()
     await db.refresh(new_opt)
+    from controllers.result import re_grade_quiz_attempts
+    await re_grade_quiz_attempts(db, quiz.id)
     return new_opt
 
 async def update_option(db: AsyncSession, option_id: int, option_in: OptionCreate) -> Option:
@@ -359,6 +370,8 @@ async def update_option(db: AsyncSession, option_id: int, option_in: OptionCreat
     db.add(option)
     await db.commit()
     await db.refresh(option)
+    from controllers.result import re_grade_quiz_attempts
+    await re_grade_quiz_attempts(db, quiz.id)
     return option
 
 async def delete_option(db: AsyncSession, option_id: int) -> None:
@@ -378,3 +391,5 @@ async def delete_option(db: AsyncSession, option_id: int) -> None:
 
     await db.delete(option)
     await db.commit()
+    from controllers.result import re_grade_quiz_attempts
+    await re_grade_quiz_attempts(db, quiz.id)

@@ -589,3 +589,113 @@ async def test_edit_published_quiz_until_results_released(client, db_session):
     })
     assert edit_fail_res.status_code == 400
     assert "Cannot edit questions after results have been released" in edit_fail_res.json()["detail"]
+
+
+async def test_retroactive_re_grading(client, db_session):
+    # 1. Create and log in Admin
+    admin_in = UserCreate(
+        name="Admin Grader",
+        email="admingrader@example.com",
+        password="adminpassword123"
+    )
+    admin_user = await user_controller.create_user(db_session, admin_in)
+    await user_controller.update_user_role(db_session, admin_user.id, UserRole.ADMIN)
+    
+    await client.post("/auth/login", json={
+        "email": "admingrader@example.com",
+        "password": "adminpassword123"
+    })
+
+    # Create Quiz
+    quiz_res = await client.post("/admin/quiz", json={
+        "title": "Grading Quiz",
+        "description": "Grading Description",
+        "time_limit_minutes": 10,
+        "pass_mark": 50,
+        "shuffle_questions": False,
+        "max_attempts": 1
+    })
+    quiz_id = quiz_res.json()["id"]
+
+    # Create initial question: correct is True
+    q_res = await client.post(f"/admin/quiz/{quiz_id}/questions", json={
+        "text": "Q1",
+        "type": "true_false",
+        "marks": 5,
+        "order": 1,
+        "options": [
+            {"text": "True", "is_correct": True, "order": 1},
+            {"text": "False", "is_correct": False, "order": 2}
+        ]
+    })
+    q_id = q_res.json()["id"]
+    opt_false_id = q_res.json()["options"][1]["id"]
+
+    # Publish Quiz
+    await client.post(f"/admin/quiz/{quiz_id}/publish")
+
+    # Logout Admin
+    await client.post("/auth/logout")
+    client.cookies.clear()
+
+    # Create and log in Student
+    student_in = UserCreate(
+        name="Student Grader",
+        email="studentgrader@example.com",
+        password="studentpassword123"
+    )
+    await user_controller.create_user(db_session, student_in)
+    await client.post("/auth/login", json={
+        "email": "studentgrader@example.com",
+        "password": "studentpassword123"
+    })
+
+    # Student starts attempt
+    start_res = await client.post(f"/student/quiz/{quiz_id}/start")
+    attempt_id = start_res.json()["id"]
+
+    # Student answers False (incorrect)
+    payload = {
+        "question_id": q_id,
+        "selected_option_id": opt_false_id,
+        "marked_for_review": False
+    }
+    encrypted_data = encrypt_payload(payload, settings.API_ENCRYPTION_KEY)
+    await client.post(f"/student/attempt/{attempt_id}/answer", json={
+        "encrypted_data": encrypted_data
+    })
+
+    # Student submits attempt (score should be 0, passed should be False)
+    submit_res = await client.post(f"/student/attempt/{attempt_id}/submit")
+    assert submit_res.status_code == 200
+    assert submit_res.json()["score"] == 0
+    assert submit_res.json()["passed"] is False
+
+    # Logout Student
+    await client.post("/auth/logout")
+    client.cookies.clear()
+
+    # Log back in Admin
+    await client.post("/auth/login", json={
+        "email": "admingrader@example.com",
+        "password": "adminpassword123"
+    })
+
+    # Admin updates correct option to False (True is now incorrect, False is correct)
+    edit_res = await client.put(f"/admin/questions/{q_id}", json={
+        "text": "Q1",
+        "type": "true_false",
+        "marks": 5,
+        "order": 1,
+        "options": [
+            {"text": "True", "is_correct": False, "order": 1},
+            {"text": "False", "is_correct": True, "order": 2}
+        ]
+    })
+    assert edit_res.status_code == 200
+
+    # Retrieve attempt details as admin (should be automatically re-graded: score should be 5, passed should be True!)
+    att_res = await client.get(f"/student/attempt/{attempt_id}/result")
+    assert att_res.status_code == 200
+    assert att_res.json()["score"] == 5
+    assert att_res.json()["passed"] is True

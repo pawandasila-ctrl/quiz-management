@@ -393,3 +393,64 @@ async def delete_attempt(db: AsyncSession, attempt_id: int) -> None:
         raise AttemptNotFoundError()
     await db.delete(attempt)
     await db.commit()
+
+
+async def re_grade_quiz_attempts(db: AsyncSession, quiz_id: int) -> None:
+    """
+    Recalculates scores, correctness of answers, and pass/fail status
+    for all submitted attempts of a quiz after questions/options were updated.
+    """
+    query_q = select(Question).options(selectinload(Question.options)).filter(Question.quiz_id == quiz_id)
+    q_res = await db.execute(query_q)
+    questions = q_res.scalars().all()
+    
+    correct_map = {}
+    for q in questions:
+        correct_opt = next((opt for opt in q.options if opt.is_correct), None)
+        correct_map[q.id] = {
+            "correct_option_id": correct_opt.id if correct_opt else None,
+            "marks": q.marks
+        }
+
+    query_quiz = select(Quiz).filter(Quiz.id == quiz_id)
+    quiz_res = await db.execute(query_quiz)
+    quiz = quiz_res.scalars().first()
+    if not quiz:
+        return
+
+    query_attempts = select(QuizAttempt).options(
+        selectinload(QuizAttempt.answers)
+    ).filter(
+        QuizAttempt.quiz_id == quiz_id,
+        QuizAttempt.status != AttemptStatus.IN_PROGRESS
+    )
+    attempts_res = await db.execute(query_attempts)
+    attempts = attempts_res.scalars().all()
+
+    for attempt in attempts:
+        total_score = 0
+        for ans in attempt.answers:
+            q_info = correct_map.get(ans.question_id)
+            if (
+                q_info
+                and q_info["correct_option_id"] is not None
+                and ans.selected_option_id == q_info["correct_option_id"]
+            ):
+                ans.is_correct = True
+                ans.marks_awarded = q_info["marks"]
+                total_score += q_info["marks"]
+            else:
+                ans.is_correct = False
+                ans.marks_awarded = 0
+            db.add(ans)
+
+        attempt.score = total_score
+        if quiz.total_marks > 0:
+            student_percentage = (total_score / quiz.total_marks) * 100
+            attempt.passed = student_percentage >= quiz.pass_mark
+        else:
+            attempt.passed = True
+        
+        db.add(attempt)
+
+    await db.commit()
