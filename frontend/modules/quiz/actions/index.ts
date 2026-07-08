@@ -203,3 +203,12 @@ export async function updateQuestionRequest(
 ): Promise<void> {
   await axiosClient.put(`/admin/questions/${questionId}`, payload);
 }
+
+export async function uploadImageRequest(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await axiosClient.post<{ secure_url: string }>("/admin/upload", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return res.data.secure_url;
+}

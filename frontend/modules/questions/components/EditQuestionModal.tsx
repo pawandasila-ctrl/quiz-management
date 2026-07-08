@@ -22,7 +22,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Save, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Save, Loader2 } from "lucide-react";
+import ImageUploadField from "./ImageUploadField";
 import { toast } from "sonner";
 
 interface EditQuestionModalProps {
@@ -223,17 +224,7 @@ export default function EditQuestionModal({
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="q-img" className="flex items-center gap-1">
-                <ImageIcon className="h-3.5 w-3.5" /> Image URL (optional)
-              </Label>
-              <Input
-                id="q-img"
-                value={qImageUrl}
-                onChange={(e) => setQImageUrl(e.target.value)}
-                placeholder="https://..."
-              />
-            </div>
+            <ImageUploadField value={qImageUrl} onChange={setQImageUrl} />
 
             <div className="space-y-1.5">
               <Label htmlFor="q-exp">Explanation (optional)</Label>

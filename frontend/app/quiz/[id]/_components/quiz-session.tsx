@@ -46,8 +46,8 @@ import {
   Repeat,
 } from "lucide-react";
 import { toast } from "sonner";
-import Image from "next/image";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import ImageLightbox from "@/components/ImageLightbox";
 import QuestionNavigator, { QuestionNavState } from "./question-navigator";
 import { AnswerStatus } from "@/modules/quiz/types";
 
@@ -138,6 +138,7 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [violationCount, setViolationCount] = useState(0);
   const [showViolationModal, setShowViolationModal] = useState(false);
+  const violationCooldownRef = useRef(false);
   const [violationsEnabled, setViolationsEnabled] = useState(false);
 
   useEffect(() => {
@@ -322,6 +323,12 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
       )
         return;
 
+      if (violationCooldownRef.current) return;
+      violationCooldownRef.current = true;
+      setTimeout(() => {
+        violationCooldownRef.current = false;
+      }, 2000);
+
       console.warn("Anti-cheat violation detected:", reason);
 
       setViolationCount((prev) => {
@@ -380,7 +387,6 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
     };
   }, [hasConfirmedStart, attempt, handleViolation, violationsEnabled]);
 
-  // Release fullscreen once the attempt is graded (manual submit, auto-submit, or time expiry).
   useEffect(() => {
     if (attempt?.status === "graded") {
       exitFullscreen();
@@ -419,6 +425,11 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
   }, []);
 
   const handleReturnToFullscreen = useCallback(() => {
+    setShowViolationModal(false);
+    violationCooldownRef.current = true;
+    setTimeout(() => {
+      violationCooldownRef.current = false;
+    }, 2000);
     if (typeof window !== "undefined") {
       window.focus();
     }
@@ -760,8 +771,7 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
   return (
     <PageShell>
       <div className="mx-auto max-w-6xl space-y-5 select-none">
-        {/* Header */}
-        <div className="flex flex-col gap-3 rounded-xl bg-slate-900 p-4 text-white shadow-sm sm:flex-row sm:items-center sm:justify-between dark:bg-slate-950">
+        <div className="sticky top-4 z-30 flex flex-col gap-3 rounded-xl bg-slate-900 p-4 text-white shadow-sm sm:flex-row sm:items-center sm:justify-between dark:bg-slate-950">
           <div>
             <h2 className="font-bold text-lg">{quiz.title}</h2>
             <span className="text-xs text-slate-300">
@@ -801,9 +811,9 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
         </div>
 
         {/* Main split: question pane + navigator sidebar */}
-        <div className="flex flex-col-reverse gap-5 lg:flex-row">
-          <div className="flex-1">
-            <Card className="border-border shadow-sm">
+        <div className="flex flex-col-reverse gap-5 lg:flex-row items-start">
+          <div className="flex-1 w-full">
+            <Card className="border-border shadow-sm relative overflow-hidden">
               <CardHeader className="p-6 pb-5">
                 <div className="flex items-center justify-between mb-3">
                   <Badge
@@ -821,19 +831,17 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
                   {currentQuestion.text}
                 </CardTitle>
                 {currentQuestion.image_url && (
-                  <div className="mt-5 rounded-lg overflow-hidden border border-border h-64 w-full relative bg-muted flex justify-center">
-                    <Image
-                      src={currentQuestion.image_url}
-                      alt="Question illustration"
-                      fill
-                      unoptimized
-                      className="object-contain"
-                    />
-                  </div>
+                  <ImageLightbox
+                    src={currentQuestion.image_url}
+                    alt="Question illustration"
+                    containerClassName="mt-5 rounded-lg overflow-hidden border border-border w-full relative bg-muted flex justify-center"
+                    imageClassName="object-contain"
+                    thumbHeight="h-64"
+                  />
                 )}
               </CardHeader>
 
-              <CardContent className="space-y-3.5 px-6 py-6 border-t border-b border-border">
+              <CardContent className="space-y-3.5 px-6 pt-6 pb-20 border-t border-border">
                 {currentQuestion.options.map((opt) => {
                   const isSelected =
                     currentAnswerState?.selectedOptionId === opt.id;
@@ -866,7 +874,7 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
                 })}
               </CardContent>
 
-              <CardFooter className="p-6 flex flex-col gap-4">
+              <CardFooter className="sticky bottom-0 z-20 bg-card border-t border-border p-6 flex flex-col gap-4 shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground self-start">
                   {isSaving && (
                     <span className="flex items-center gap-1">
@@ -944,7 +952,7 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
             </Card>
           </div>
 
-          <Card className="border-border shadow-sm p-4 lg:w-80 lg:shrink-0">
+          <Card className="lg:sticky lg:top-28 border-border shadow-sm p-4 lg:w-80 lg:shrink-0 h-fit">
             <QuestionNavigator
               total={questions.length}
               currentIndex={currentQuestionIndex}
@@ -959,10 +967,82 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
           isOpen={showSubmitConfirm}
           onOpenChange={setShowSubmitConfirm}
           title="Submit Quiz"
-          description={`Answered: ${answeredCount}, Not Answered: ${statusCounts.not_answered}, Marked for Review: ${
-            statusCounts.marked_for_review +
-            statusCounts.answered_marked_for_review
-          }, Not Visited: ${statusCounts.not_visited}. Are you sure you want to finish and submit your quiz? You will not be able to change your answers.`}
+          description={
+            <div className="space-y-4 pt-2">
+              <p className="text-sm text-muted-foreground text-left">
+                Here is the summary of your quiz attempt. Please review before
+                final submission.
+              </p>
+
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-card">
+                  <span className="h-3.5 w-3.5 shrink-0 rounded bg-emerald-500" />
+                  <div className="flex-1 flex justify-between items-center min-w-0">
+                    <span className="text-muted-foreground font-medium truncate text-xs">
+                      Answered
+                    </span>
+                    <span className="font-bold text-foreground text-sm ml-2">
+                      {answeredCount}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-card">
+                  <span className="h-3.5 w-3.5 shrink-0 rounded bg-rose-500" />
+                  <div className="flex-1 flex justify-between items-center min-w-0">
+                    <span className="text-muted-foreground font-medium truncate text-xs">
+                      Not Answered
+                    </span>
+                    <span className="font-bold text-foreground text-sm ml-2">
+                      {statusCounts.not_answered}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-card">
+                  <span className="h-3.5 w-3.5 shrink-0 rounded bg-violet-500" />
+                  <div className="flex-1 flex justify-between items-center min-w-0">
+                    <span className="text-muted-foreground font-medium truncate text-xs">
+                      Marked
+                    </span>
+                    <span className="font-bold text-foreground text-sm ml-2">
+                      {statusCounts.marked_for_review}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-card">
+                  <span className="h-3.5 w-3.5 shrink-0 rounded bg-amber-500" />
+                  <div className="flex-1 flex justify-between items-center min-w-0">
+                    <span className="text-muted-foreground font-medium truncate text-xs">
+                      Answered & Marked
+                    </span>
+                    <span className="font-bold text-foreground text-sm ml-2">
+                      {statusCounts.answered_marked_for_review}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border bg-card col-span-2">
+                  <span className="h-3.5 w-3.5 shrink-0 rounded border border-border bg-muted" />
+                  <div className="flex-1 flex justify-between items-center min-w-0">
+                    <span className="text-muted-foreground font-medium truncate text-xs">
+                      Not Visited
+                    </span>
+                    <span className="font-bold text-foreground text-sm ml-2">
+                      {statusCounts.not_visited}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-yellow-200 bg-yellow-50/50 dark:bg-yellow-950/20 dark:border-yellow-900/30 p-3 text-xs text-yellow-800 dark:text-yellow-200 text-left">
+                <strong>Warning:</strong> You will not be able to change your
+                answers after submitting. Are you sure you want to finish the
+                quiz?
+              </div>
+            </div>
+          }
           onConfirm={handleManualSubmit}
           confirmText="Submit"
           variant="default"
