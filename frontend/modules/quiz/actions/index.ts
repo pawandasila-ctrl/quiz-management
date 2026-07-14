@@ -1,5 +1,11 @@
 import { axiosClient } from "@/hooks/use-axios";
-import { Quiz, Category, QuizAttempt, LeaderboardEntry, AnswerState } from "../types";
+import {
+  Quiz,
+  Category,
+  QuizAttempt,
+  LeaderboardEntry,
+  AnswerState,
+} from "../types";
 import { User, UserRole } from "../../auth/types";
 import { encryptPayload } from "@/lib/crypto";
 
@@ -39,11 +45,16 @@ export async function submitAnswerRequest(
   attemptId: number,
   payload: SaveAnswerPayload,
 ): Promise<AnswerState> {
-  const encryptionKey = process.env.NEXT_PUBLIC_API_ENCRYPTION_KEY || "dev-encryption-key-must-be-32-bytes-long!";
+  const encryptionKey =
+    process.env.NEXT_PUBLIC_API_ENCRYPTION_KEY ||
+    "dev-encryption-key-must-be-32-bytes-long!";
   const encrypted = await encryptPayload(payload, encryptionKey);
-  const res = await axiosClient.post<AnswerState>(`/student/attempt/${attemptId}/answer`, {
-    encrypted_data: encrypted,
-  });
+  const res = await axiosClient.post<AnswerState>(
+    `/student/attempt/${attemptId}/answer`,
+    {
+      encrypted_data: encrypted,
+    },
+  );
   return res.data;
 }
 
@@ -91,7 +102,9 @@ export async function getAdminQuizDetailsRequest(
 export async function getAdminQuizAttemptsRequest(
   quizId: number,
 ): Promise<QuizAttempt[]> {
-  const res = await axiosClient.get<QuizAttempt[]>(`/admin/quiz/${quizId}/attempts`);
+  const res = await axiosClient.get<QuizAttempt[]>(
+    `/admin/quiz/${quizId}/attempts`,
+  );
   return res.data;
 }
 
@@ -211,8 +224,12 @@ export async function updateQuestionRequest(
 export async function uploadImageRequest(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
-  const res = await axiosClient.post<{ secure_url: string }>("/admin/upload", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  const res = await axiosClient.post<{ secure_url: string }>(
+    "/admin/upload",
+    formData,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+    },
+  );
   return res.data.secure_url;
 }

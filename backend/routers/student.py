@@ -39,12 +39,16 @@ async def get_quiz_student_view(
     id: int,
     request: Request,
     db: DbSession,
-    current_user: User = Depends(require_role([UserRole.STUDENT]))
+    current_user: User = Depends(require_role([UserRole.STUDENT, UserRole.INSTRUCTOR, UserRole.ADMIN]))
 ):
-    """Retrieve quiz questions and options without correct answer markers."""
+    """Retrieve quiz questions and options without correct answer markers.
+    
+    Students can only view published quizzes.
+    Admin and instructor can view any quiz regardless of status (needed for leaderboard).
+    """
     try:
         quiz = await quiz_controller.get_quiz_by_id(db, id)
-        if quiz.status != QuizStatus.PUBLISHED:
+        if current_user.role == UserRole.STUDENT and quiz.status != QuizStatus.PUBLISHED:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Quiz not found.")
         return quiz
     except PracticeException as e:
