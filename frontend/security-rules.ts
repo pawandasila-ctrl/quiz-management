@@ -13,8 +13,12 @@ const getCspValue = (): string => {
     "data:",
     "https://api.cloudinary.com",
     "https://res.cloudinary.com",
-    "http://localhost:5001",
-    "http://127.0.0.1:5001"
+    // localhost entries are only needed for local development.
+    // In production all API calls go through the same-origin Next.js proxy (/api/*),
+    // so 'self' already covers them.
+    ...(process.env.NODE_ENV !== "production"
+      ? ["http://localhost:5001", "http://127.0.0.1:5001"]
+      : []),
   ];
   const apiUrL = process.env.NEXT_PUBLIC_API_URL;
   if (apiUrL) {
@@ -24,7 +28,7 @@ const getCspValue = (): string => {
         defaultConnectSrc.push(origin);
       }
     } catch {
-      // Skip if not a valid full URL
+      // Skip if not a valid full URL (e.g. when set to "/api" in production)
     }
   }
   return `default-src 'self'; connect-src ${defaultConnectSrc.join(" ")}; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://unpkg.com https://www.google.com https://www.gstatic.com; worker-src 'self' blob: https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' blob: data: https: https://res.cloudinary.com https://api.cloudinary.com; font-src 'self' https://fonts.gstatic.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://www.google.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self';`;

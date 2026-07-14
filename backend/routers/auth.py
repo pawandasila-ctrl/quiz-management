@@ -71,22 +71,25 @@ async def login_user(
     is_production = settings.ENVIRONMENT == "production"
 
     # Set access token in secure HTTP-only cookies
+    # SameSite=lax is correct here because the Next.js proxy forwards all
+    # /api/* calls from the same origin — SameSite=none is NOT needed and
+    # would weaken CSRF protection unnecessarily.
     response.set_cookie(
         key="access_token",
         value=session.token,
         httponly=True,
         secure=is_production,
-        samesite="none" if is_production else "lax",
+        samesite="lax",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
 
-    # Set non-HttpOnly helper cookies readable by frontend
+    # Set non-HttpOnly helper cookies readable by frontend middleware
     response.set_cookie(
         key="role",
         value=user.role.value,
         httponly=False,
         secure=is_production,
-        samesite="none" if is_production else "lax",
+        samesite="lax",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
     response.set_cookie(
@@ -94,7 +97,7 @@ async def login_user(
         value="true",
         httponly=False,
         secure=is_production,
-        samesite="none" if is_production else "lax",
+        samesite="lax",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
 
@@ -148,7 +151,7 @@ async def refresh_token(
             value=new_session.token,
             httponly=True,
             secure=is_production,
-            samesite="none" if is_production else "lax",
+            samesite="lax",
             max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
             domain=settings.COOKIE_DOMAIN
         )
