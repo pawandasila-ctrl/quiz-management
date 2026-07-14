@@ -41,38 +41,38 @@ export default function AttemptHistoryList() {
   const quizAttempts = React.useMemo(() => attempts || [], [attempts]);
 
   const groupedAttempts = React.useMemo(() => {
-    return quizAttempts.reduce<
-      Record<
-        number,
-        {
-          quiz_title: string;
-          quiz_description: string | null;
-          results_visible: boolean;
-          attempts: typeof quizAttempts;
-        }
-      >
-    >((acc, attempt) => {
-      const existing = acc[attempt.quiz_id];
+    const map = new Map<
+      number,
+      {
+        quiz_title: string;
+        quiz_description: string | null;
+        results_visible: boolean;
+        attempts: typeof quizAttempts;
+      }
+    >();
+
+    for (const attempt of quizAttempts) {
+      const existing = map.get(attempt.quiz_id);
       const title = attempt.quiz?.title || `Quiz #${attempt.quiz_id}`;
       const description = attempt.quiz?.description || null;
       const results_visible = attempt.quiz?.results_visible ?? false;
 
       if (!existing) {
-        acc[attempt.quiz_id] = {
+        map.set(attempt.quiz_id, {
           quiz_title: title,
           quiz_description: description,
           results_visible,
           attempts: [attempt],
-        };
+        });
       } else {
         existing.attempts.push(attempt);
       }
-      return acc;
-    }, {});
+    }
+    return map;
   }, [quizAttempts]);
 
   const quizGroups = React.useMemo(() => {
-    return Object.values(groupedAttempts);
+    return Array.from(groupedAttempts.values());
   }, [groupedAttempts]);
 
   if (isLoading) {
