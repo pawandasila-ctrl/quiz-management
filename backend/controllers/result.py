@@ -297,6 +297,7 @@ async def get_student_attempts(
             selectinload(QuizAttempt.answers)
         )
         .filter(QuizAttempt.student_id == student_id)
+        .order_by(QuizAttempt.started_at.desc())
         .offset(offset)
         .limit(limit)
     )
@@ -318,6 +319,7 @@ async def get_quiz_attempts(
             selectinload(QuizAttempt.answers),
         )
         .filter(QuizAttempt.quiz_id == quiz_id)
+        .order_by(QuizAttempt.started_at.desc())
         .offset(offset)
         .limit(limit)
     )
