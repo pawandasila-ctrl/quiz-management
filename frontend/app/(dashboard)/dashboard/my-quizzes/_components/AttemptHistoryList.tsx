@@ -72,11 +72,7 @@ export default function AttemptHistoryList() {
   }, [quizAttempts]);
 
   const quizGroups = React.useMemo(() => {
-    return Object.values(groupedAttempts).sort((a, b) => {
-      const aLatest = Math.max(...a.attempts.map((att) => att.attempt_number));
-      const bLatest = Math.max(...b.attempts.map((att) => att.attempt_number));
-      return bLatest - aLatest;
-    });
+    return Object.values(groupedAttempts);
   }, [groupedAttempts]);
 
   if (isLoading) {
