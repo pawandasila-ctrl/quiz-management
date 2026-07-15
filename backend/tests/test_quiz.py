@@ -699,3 +699,81 @@ async def test_retroactive_re_grading(client, db_session):
     assert att_res.status_code == 200
     assert att_res.json()["score"] == 5
     assert att_res.json()["passed"] is True
+
+async def test_update_question_options_partial(client, db_session):
+    """
+    Verify that updating a question's text/metadata without sending the
+    optional options key does NOT delete the question's existing options.
+    """
+    # 1. Register & login Admin
+    admin_in = UserCreate(name="Admin Options Partial", email="partialoptions@example.com", password="adminpassword123")
+    admin_user = await user_controller.create_user(db_session, admin_in)
+    await user_controller.update_user_role(db_session, admin_user.id, UserRole.ADMIN)
+    await client.post("/auth/login", json={"email": "partialoptions@example.com", "password": "adminpassword123"})
+
+    # 2. Create quiz and question with options
+    quiz_res = await client.post("/admin/quiz", json={"title": "Quiz Partial Options", "description": "Desc"})
+    quiz_id = quiz_res.json()["id"]
+
+    q_res = await client.post(f"/admin/quiz/{quiz_id}/questions", json={
+        "text": "Original text",
+        "type": "mcq",
+        "marks": 5,
+        "options": [
+            {"text": "Opt 1", "is_correct": True, "order": 1},
+            {"text": "Opt 2", "is_correct": False, "order": 2}
+        ]
+    })
+    assert q_res.status_code == 201
+    question_id = q_res.json()["id"]
+    assert len(q_res.json()["options"]) == 2
+
+    # 3. Update question metadata but do not send the options key
+    update_res = await client.put(f"/admin/questions/{question_id}", json={
+        "text": "Updated text",
+        "type": "mcq",
+        "marks": 5
+    })
+    assert update_res.status_code == 200
+    
+    # 4. Assert options are still intact and NOT deleted
+    reloaded_q = update_res.json()
+    assert reloaded_q["text"] == "Updated text"
+    assert len(reloaded_q["options"]) == 2
+    assert reloaded_q["options"][0]["text"] == "Opt 1"
+
+async def test_delete_only_correct_option(client, db_session):
+    """
+    Verify that deleting the only correct option of a question is prevented.
+    """
+    # 1. Register & login Admin
+    admin_in = UserCreate(name="Admin Guard", email="guard@example.com", password="adminpassword123")
+    admin_user = await user_controller.create_user(db_session, admin_in)
+    await user_controller.update_user_role(db_session, admin_user.id, UserRole.ADMIN)
+    await client.post("/auth/login", json={"email": "guard@example.com", "password": "adminpassword123"})
+
+    # 2. Create quiz and question with options
+    quiz_res = await client.post("/admin/quiz", json={"title": "Quiz Guard", "description": "Desc"})
+    quiz_id = quiz_res.json()["id"]
+
+    q_res = await client.post(f"/admin/quiz/{quiz_id}/questions", json={
+        "text": "Which option is correct?",
+        "type": "mcq",
+        "options": [
+            {"text": "Correct Option", "is_correct": True, "order": 1},
+            {"text": "Incorrect Option", "is_correct": False, "order": 2}
+        ]
+    })
+    question_id = q_res.json()["id"]
+    correct_opt_id = q_res.json()["options"][0]["id"]
+    incorrect_opt_id = q_res.json()["options"][1]["id"]
+
+    # 3. Try to delete the only correct option — should fail with 400 Bad Request
+    del_res = await client.delete(f"/admin/options/{correct_opt_id}")
+    assert del_res.status_code == 400
+    assert "Cannot delete the only correct option of a question" in del_res.json()["detail"]
+
+    # 4. Try to delete the incorrect option — should succeed
+    del_inc_res = await client.delete(f"/admin/options/{incorrect_opt_id}")
+    assert del_inc_res.status_code == 200
+

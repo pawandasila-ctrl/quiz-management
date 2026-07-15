@@ -414,7 +414,7 @@ async def re_grade_quiz_attempts(db: AsyncSession, quiz_id: int) -> None:
         text(
             "UPDATE answers "
             "SET "
-            "  is_correct = (selected_option_id = o.id), "
+            "  is_correct = CASE WHEN selected_option_id = o.id THEN true ELSE false END, "
             "  marks_awarded = CASE WHEN selected_option_id = o.id THEN q.marks ELSE 0 END "
             "FROM questions q "
             "JOIN options o ON o.question_id = q.id AND o.is_correct = true "
@@ -427,6 +427,7 @@ async def re_grade_quiz_attempts(db: AsyncSession, quiz_id: int) -> None:
         text(
             "UPDATE quiz_attempts "
             "SET "
+            "  total_marks = :total_marks, "
             "  score = (SELECT COALESCE(SUM(marks_awarded), 0) FROM answers WHERE attempt_id = quiz_attempts.id), "
             "  passed = ( "
             "    CASE WHEN :total_marks > 0 THEN "

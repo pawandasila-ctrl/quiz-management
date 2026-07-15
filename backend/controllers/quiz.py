@@ -285,10 +285,10 @@ async def update_question(db: AsyncSession, question_id: int, question_in: Quest
 
     db.add(question)
 
-    existing_options = {opt.order: opt for opt in question.options}
-    new_orders = {opt_in.order for opt_in in question_in.options} if question_in.options else set()
+    if question_in.options is not None:
+        existing_options = {opt.order: opt for opt in question.options}
+        new_orders = {opt_in.order for opt_in in question_in.options}
 
-    if question_in.options:
         for opt_in in question_in.options:
             if opt_in.order in existing_options:
                 opt = existing_options[opt_in.order]
@@ -304,9 +304,9 @@ async def update_question(db: AsyncSession, question_id: int, question_in: Quest
                 )
                 db.add(new_opt)
 
-    for order, opt in existing_options.items():
-        if order not in new_orders:
-            await db.delete(opt)
+        for order, opt in existing_options.items():
+            if order not in new_orders:
+                await db.delete(opt)
 
     await db.commit()
     
@@ -400,6 +400,16 @@ async def delete_option(db: AsyncSession, option_id: int) -> None:
     quiz = await get_quiz_by_id(db, question.quiz_id)
     if quiz.results_visible:
         raise QuizStatusError("Cannot edit options after results have been released.")
+
+    if option.is_correct:
+        query_other = select(Option).filter(
+            Option.question_id == option.question_id,
+            Option.is_correct == True,
+            Option.id != option.id
+        )
+        other_res = await db.execute(query_other)
+        if not other_res.scalars().first():
+            raise QuizStatusError("Cannot delete the only correct option of a question. Please designate another option as correct first.")
 
     await db.delete(option)
     await db.commit()
