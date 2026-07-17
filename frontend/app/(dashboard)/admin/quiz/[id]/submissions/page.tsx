@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import React from "react";
 import ReviewHeader from "@/components/review/ReviewHeader";
 import SubmissionsTableClient from "@/components/review/SubmissionsTableClient";
@@ -5,6 +6,14 @@ import SubmissionsTableClient from "@/components/review/SubmissionsTableClient";
 interface PageProps {
   params: Promise<{ id: string }>;
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const resolvedParams = await params;
+  return {
+    title: `Submissions Quiz #${resolvedParams.id} — Admin`,
+    description: "Manage, review, and reset student quiz attempts.",
+  };
 }
 
 export default async function AdminQuizSubmissionsPage({ params }: PageProps) {

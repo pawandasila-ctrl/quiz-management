@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import AttemptHistoryList from "./_components/AttemptHistoryList";
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = {
+  title: "Attempt History — Quiz System",
+  description: "View all your past quiz attempt logs, grades, and detailed results.",
+};
 
 export default function MyQuizzesPage() {
   return (

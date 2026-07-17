@@ -1,9 +1,18 @@
+import type { Metadata } from "next";
 import React from "react";
 import ReviewHeader from "@/components/review/ReviewHeader";
 import AttemptReviewContainerClient from "@/components/review/AttemptReviewContainerClient";
 
 interface PageProps {
   params: Promise<{ id: string; attemptId: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const resolvedParams = await params;
+  return {
+    title: `Auditing Attempt #${resolvedParams.attemptId} — Admin`,
+    description: "Detailed review of answers submitted by the student.",
+  };
 }
 
 export default async function AdminAttemptReviewPage({ params }: PageProps) {

@@ -1,9 +1,18 @@
+import type { Metadata } from "next";
 import React from "react";
 import ReviewHeader from "@/components/review/ReviewHeader";
 import AttemptReviewContainerClient from "@/components/review/AttemptReviewContainerClient";
 
 interface PageProps {
   params: Promise<{ id: string; attemptId: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const resolvedParams = await params;
+  return {
+    title: `Review Attempt #${resolvedParams.attemptId} — Quiz System`,
+    description: "Detailed review of answers, correctness, and point breakdown.",
+  };
 }
 
 export default async function StudentAttemptReviewPage({ params }: PageProps) {
