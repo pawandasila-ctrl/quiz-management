@@ -1,195 +1,317 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { useAdminQuizzes, useAdminCategories } from "@/modules/quiz/hooks";
 import { useDebounce } from "@/hooks/use-debounce";
-import { Loader2, Plus, Search, X, Filter } from "lucide-react";
+import {
+  Loader2,
+  Search,
+  X,
+  Filter,
+  FolderOpen,
+  RotateCcw,
+} from "lucide-react";
 import QuizCard from "@/modules/quiz/components/QuizCard";
+import { QuizGridSkeleton } from "@/modules/quiz/components/QuizCardSkeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Quiz } from "@/modules/quiz/types";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { Quiz, PaginatedResponse } from "@/modules/quiz/types";
 
 interface AdminQuizListProps {
-  initialQuizzes?: Quiz[];
+  initialQuizzes?: PaginatedResponse<Quiz> | Quiz[];
 }
 
 export default function AdminQuizList({ initialQuizzes }: AdminQuizListProps) {
-  const { data: quizzes, isLoading: isQuizzesLoading } = useAdminQuizzes({
-    initialData: initialQuizzes,
-  });
   const { data: categories } = useAdminCategories();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [page, setPage] = useState<number>(1);
 
   // Debounce search input (300ms) for high UI responsiveness
   const debouncedSearch = useDebounce(searchTerm, 300);
 
-  const isLoading = isQuizzesLoading && !quizzes;
+  // Event handlers to update filter state and reset page to 1
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setPage(1);
+  };
 
-  // Filtered Quizzes memoized for high performance
-  const filteredQuizzes = useMemo(() => {
-    if (!quizzes) return [];
+  const handleClearSearch = () => {
+    setSearchTerm("");
+    setPage(1);
+  };
 
-    return quizzes.filter((quiz) => {
-      // 1. Search filter (Title, Description, Creator Name)
-      if (debouncedSearch.trim()) {
-        const query = debouncedSearch.toLowerCase().trim();
-        const matchesTitle = quiz.title.toLowerCase().includes(query);
-        const matchesDesc = quiz.description?.toLowerCase().includes(query) ?? false;
-        const matchesCreator = quiz.creator?.name.toLowerCase().includes(query) ?? false;
-        if (!matchesTitle && !matchesDesc && !matchesCreator) {
-          return false;
-        }
-      }
+  const handleCategoryChange = (val: string) => {
+    setSelectedCategory(val);
+    setPage(1);
+  };
 
-      // 2. Category filter
-      if (selectedCategory !== "all") {
-        if (quiz.category?.name !== selectedCategory) {
-          return false;
-        }
-      }
+  const handleStatusChange = (val: string) => {
+    setSelectedStatus(val);
+    setPage(1);
+  };
 
-      // 3. Status filter
-      if (selectedStatus !== "all") {
-        if (quiz.status !== selectedStatus) {
-          return false;
-        }
-      }
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setSelectedCategory("all");
+    setSelectedStatus("all");
+    setPage(1);
+  };
 
-      return true;
-    });
-  }, [quizzes, debouncedSearch, selectedCategory, selectedStatus]);
+  // Convert selectedCategory string to numeric ID directly
+  const categoryId =
+    selectedCategory !== "all" && !isNaN(Number(selectedCategory))
+      ? Number(selectedCategory)
+      : undefined;
 
   const hasActiveFilters =
     searchTerm.trim().length > 0 ||
     selectedCategory !== "all" ||
     selectedStatus !== "all";
 
-  const handleResetFilters = () => {
-    setSearchTerm("");
-    setSelectedCategory("all");
-    setSelectedStatus("all");
-  };
+  const isDefaultState = !hasActiveFilters && page === 1;
 
-  if (isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  // Format initialData if passed from RSC
+  const formattedInitialData: PaginatedResponse<Quiz> | undefined =
+    React.useMemo(() => {
+      if (!initialQuizzes) return undefined;
+      if (Array.isArray(initialQuizzes)) {
+        return {
+          items: initialQuizzes,
+          total: initialQuizzes.length,
+          page: 1,
+          limit: 9,
+          pages: 1,
+        };
+      }
+      return initialQuizzes;
+    }, [initialQuizzes]);
 
-  if (!quizzes || quizzes.length === 0) {
-    return (
-      <div className="text-center py-16 text-muted-foreground text-sm border border-dashed border-border rounded-xl bg-muted/20">
-        <Plus className="h-10 w-10 mx-auto mb-3 opacity-30" />
-        <p className="font-medium">No quizzes created yet.</p>
-        <p className="mt-1">Click &quot;Create Quiz&quot; to build your first exam.</p>
-      </div>
-    );
-  }
+  // Server-side API fetching with params & pagination
+  const {
+    data: quizData,
+    isLoading: isQuizzesLoading,
+    isFetching,
+  } = useAdminQuizzes(
+    {
+      search: debouncedSearch.trim() || undefined,
+      category_id: categoryId,
+      status: selectedStatus !== "all" ? selectedStatus : undefined,
+      page,
+      limit: 9,
+    },
+    {
+      initialData: isDefaultState ? formattedInitialData : undefined,
+    },
+  );
+
+  const quizzes = quizData?.items || [];
+  const total = quizData?.total || 0;
+  const totalPages = quizData?.pages || 1;
+
+  const isLoading = isQuizzesLoading && !quizData;
 
   return (
     <div className="space-y-6">
-      {/* Search & Filter Controls */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 bg-card border border-border rounded-xl shadow-sm">
-        {/* Search Bar with Debounce */}
+      {/* Search & Filter Toolbar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        {/* Search Bar */}
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
             type="text"
-            placeholder="Search quizzes by title, description or creator..."
+            placeholder="Search by quiz title, description or creator..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 pr-8 h-9 text-sm border-border bg-background"
+            onChange={handleSearchChange}
+            className="pl-9 pr-8 h-9 text-xs bg-card border-border shadow-xs hover:border-primary/40 focus:border-primary transition-colors"
           />
           {searchTerm && (
             <button
-              onClick={() => setSearchTerm("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              onClick={handleClearSearch}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded-full hover:bg-accent"
+              title="Clear search"
             >
               <X className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
 
-        {/* Category & Status Filters */}
+        {/* Shadcn Select Dropdowns */}
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           {/* Category Dropdown */}
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="h-9 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
-          >
-            <option value="all">All Categories</option>
-            {categories?.map((cat) => (
-              <option key={cat.id} value={cat.name}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
+          <Select value={selectedCategory} onValueChange={handleCategoryChange}>
+            <SelectTrigger className="w-full sm:w-42.5 h-9 text-xs bg-card border-border shadow-xs hover:bg-accent/50 transition-colors">
+              <div className="flex items-center gap-1.5 truncate">
+                <FolderOpen className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <SelectValue placeholder="All Categories" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories?.map((cat) => (
+                <SelectItem key={cat.id} value={String(cat.id)}>
+                  {cat.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Status Dropdown */}
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="h-9 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
-          >
-            <option value="all">All Statuses</option>
-            <option value="published">Published</option>
-            <option value="draft">Draft</option>
-            <option value="closed">Closed</option>
-          </select>
+          <Select value={selectedStatus} onValueChange={handleStatusChange}>
+            <SelectTrigger className="w-full sm:w-35 h-9 text-xs bg-card border-border shadow-xs hover:bg-accent/50 transition-colors">
+              <div className="flex items-center gap-1.5 truncate">
+                <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <SelectValue placeholder="All Statuses" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="published">Published</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="closed">Closed</SelectItem>
+            </SelectContent>
+          </Select>
 
-          {/* Clear Filters Button */}
+          {/* Reset Filters Button */}
           {hasActiveFilters && (
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={handleResetFilters}
-              className="h-9 text-xs text-muted-foreground hover:text-foreground gap-1 px-2.5"
+              className="h-9 text-xs gap-1.5 px-3 border-border hover:bg-accent text-muted-foreground hover:text-foreground shrink-0"
             >
-              <X className="h-3.5 w-3.5" />
-              Reset
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Reset</span>
             </Button>
           )}
         </div>
       </div>
 
-      {/* Active Filter Counter */}
-      {hasActiveFilters && (
-        <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+      {/* Filter & Pagination Info Bar */}
+      <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+        <div className="flex items-center gap-2">
           <span>
-            Showing <strong className="text-foreground">{filteredQuizzes.length}</strong> of{" "}
-            <strong className="text-foreground">{quizzes.length}</strong> quizzes
+            Showing{" "}
+            <strong className="text-foreground">
+              {isLoading || isFetching ? "..." : quizzes.length}
+            </strong>{" "}
+            of <strong className="text-foreground">{total}</strong> total quizzes
           </span>
+          {hasActiveFilters && (
+            <Badge
+              variant="secondary"
+              className="text-[10px] px-2 py-0 font-normal"
+            >
+              Filtered
+            </Badge>
+          )}
+          {isFetching && (
+            <Loader2 className="h-3 w-3 animate-spin text-primary ml-1" />
+          )}
         </div>
-      )}
+        {totalPages > 1 && (
+          <span className="text-[11px] font-medium">
+            Page {page} of {totalPages}
+          </span>
+        )}
+      </div>
 
-      {/* Quiz Grid */}
-      {filteredQuizzes.length === 0 ? (
-        <div className="text-center py-16 text-muted-foreground text-sm border border-dashed border-border rounded-xl bg-card">
+      {/* Quiz Grid or Skeleton UI */}
+      {isLoading || (isFetching && quizzes.length === 0) ? (
+        <QuizGridSkeleton count={6} />
+      ) : quizzes.length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground text-sm border border-dashed border-border rounded-xl bg-card/50">
           <Filter className="h-8 w-8 mx-auto mb-2 opacity-30" />
-          <p className="font-semibold text-foreground">No quizzes match your filter criteria.</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Try adjusting your search terms or clearing selected dropdown filters.
+          <p className="font-semibold text-foreground">
+            {hasActiveFilters
+              ? "No quizzes match your filter criteria."
+              : "No quizzes created yet."}
           </p>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleResetFilters}
-            className="mt-4 text-xs"
-          >
-            Clear Filters
-          </Button>
+          <p className="text-xs text-muted-foreground mt-1">
+            {hasActiveFilters
+              ? "Try adjusting your search terms or clearing selected dropdown filters."
+              : "Click 'Create Quiz' above to build your first exam."}
+          </p>
+          {hasActiveFilters && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleResetFilters}
+              className="mt-4 text-xs gap-1.5"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Clear Filters</span>
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredQuizzes.map((quiz) => (
+          {quizzes.map((quiz) => (
             <QuizCard key={quiz.id} quiz={quiz} />
           ))}
+        </div>
+      )}
+
+      {/* Shadcn Pagination Bar */}
+      {totalPages > 1 && (
+        <div className="pt-4 border-t border-border/60">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                  className={
+                    page <= 1
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (pageNum) => (
+                  <PaginationItem key={pageNum}>
+                    <Button
+                      size="sm"
+                      variant={pageNum === page ? "default" : "outline"}
+                      onClick={() => setPage(pageNum)}
+                      className="h-8 w-8 p-0 text-xs font-medium"
+                    >
+                      {pageNum}
+                    </Button>
+                  </PaginationItem>
+                ),
+              )}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+                  className={
+                    page >= totalPages
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       )}
     </div>

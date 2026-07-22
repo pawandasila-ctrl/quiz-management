@@ -5,12 +5,18 @@ import {
   QuizAttempt,
   LeaderboardEntry,
   AnswerState,
+  QuizFilterParams,
+  PaginatedResponse,
 } from "../types";
 import { User, UserRole } from "../../auth/types";
 import { encryptPayload } from "@/lib/crypto";
 
-export async function getStudentQuizzesRequest(): Promise<Quiz[]> {
-  const res = await axiosClient.get<Quiz[]>("/student/quiz");
+export async function getStudentQuizzesRequest(
+  params?: QuizFilterParams,
+): Promise<PaginatedResponse<Quiz>> {
+  const res = await axiosClient.get<PaginatedResponse<Quiz>>("/student/quiz", {
+    params,
+  });
   return res.data;
 }
 
@@ -87,8 +93,12 @@ export async function getAttemptResultRequest(
 
 // ── Admin Actions ───────────────────────────────────────────────────────────
 
-export async function getAdminQuizzesRequest(): Promise<Quiz[]> {
-  const res = await axiosClient.get<Quiz[]>("/admin/quiz");
+export async function getAdminQuizzesRequest(
+  params?: QuizFilterParams,
+): Promise<PaginatedResponse<Quiz>> {
+  const res = await axiosClient.get<PaginatedResponse<Quiz>>("/admin/quiz", {
+    params,
+  });
   return res.data;
 }
 

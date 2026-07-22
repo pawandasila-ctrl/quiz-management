@@ -32,15 +32,18 @@ import {
   CreateCategoryPayload,
   CreateQuestionPayload,
 } from "@/modules/quiz/actions";
-import { Quiz, Category, QuizAttempt, LeaderboardEntry, AnswerState } from "../types";
+import { Quiz, Category, QuizAttempt, LeaderboardEntry, AnswerState, PaginatedResponse, QuizFilterParams } from "../types";
 import { User, UserRole } from "../../auth/types";
 
 // ── Student Hooks ───────────────────────────────────────────────────────────
 
-export function useStudentQuizzes(options?: { initialData?: Quiz[] }) {
-  return useQuery<Quiz[], Error>({
-    queryKey: ["student-quizzes"],
-    queryFn: getStudentQuizzesRequest,
+export function useStudentQuizzes(
+  params?: QuizFilterParams,
+  options?: { initialData?: PaginatedResponse<Quiz> }
+) {
+  return useQuery<PaginatedResponse<Quiz>, Error>({
+    queryKey: ["student-quizzes", params],
+    queryFn: () => getStudentQuizzesRequest(params),
     initialData: options?.initialData,
   });
 }
@@ -131,10 +134,13 @@ export function useQuizAttemptResult(
 
 // ── Admin Hooks ─────────────────────────────────────────────────────────────
 
-export function useAdminQuizzes(options?: { initialData?: Quiz[] }) {
-  return useQuery<Quiz[], Error>({
-    queryKey: ["admin-quizzes"],
-    queryFn: getAdminQuizzesRequest,
+export function useAdminQuizzes(
+  params?: QuizFilterParams,
+  options?: { initialData?: PaginatedResponse<Quiz> }
+) {
+  return useQuery<PaginatedResponse<Quiz>, Error>({
+    queryKey: ["admin-quizzes", params],
+    queryFn: () => getAdminQuizzesRequest(params),
     initialData: options?.initialData,
   });
 }

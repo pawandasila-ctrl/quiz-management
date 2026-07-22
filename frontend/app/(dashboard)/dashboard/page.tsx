@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import StudentQuizList from "./_components/StudentQuizList";
 import { serverFetch } from "@/lib/server-api";
-import { Quiz, QuizAttempt } from "@/modules/quiz/types";
+import { Quiz, QuizAttempt, PaginatedResponse } from "@/modules/quiz/types";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default async function StudentDashboardPage() {
   // Parallel server-side pre-fetching to eliminate client waterfalls
   const [initialQuizzes, initialAttempts] = await Promise.all([
-    serverFetch<Quiz[]>("/student/quiz"),
+    serverFetch<PaginatedResponse<Quiz>>("/student/quiz"),
     serverFetch<QuizAttempt[]>("/student/attempts"),
   ]);
 

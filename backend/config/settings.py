@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     API_ENCRYPTION_KEY: str = "dev-encryption-key-must-be-32-bytes-long!"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080
     DATABASE_URL: str   
+    REDIS_URL: str = "redis://localhost:6379/0"
     ENVIRONMENT: str = "development"  
     CORS_ORIGINS: List[str] = ["http://localhost:3000"]
     COOKIE_DOMAIN: str | None = None

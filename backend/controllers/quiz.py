@@ -3,7 +3,8 @@ from typing import List
 from sqlalchemy import select, update, func, text, or_
 from sqlalchemy.orm import selectinload
 from models.quiz import Category, Quiz, Question, Option, QuizStatus
-from schemas.quiz import CategoryCreate, QuizCreate, QuizUpdate, QuestionCreate, OptionCreate
+from schemas.quiz import CategoryCreate, QuizCreate, QuizUpdate, QuestionCreate, OptionCreate, QuizResponse
+from config.redis import get_cache, set_cache, invalidate_pattern
 from utils.exceptions import (
     QuizNotFoundError, QuizStatusError, CategoryNotFoundError,
     QuestionNotFoundError, OptionNotFoundError
@@ -43,21 +44,34 @@ async def create_category(db: AsyncSession, category_in: CategoryCreate) -> Cate
     db.add(new_cat)
     await db.commit()
     await db.refresh(new_cat)
+    await invalidate_pattern("categories:*")
     return new_cat
 
-async def get_categories(db: AsyncSession) -> list[Category]:
+async def get_categories(db: AsyncSession) -> tuple[list, bool]:
+    cache_key = "categories:all"
+    cached_data = await get_cache(cache_key)
+    if cached_data:
+        return cached_data, True
+
     query = select(Category)
     result = await db.execute(query)
-    return result.scalars().all()
+    cats = list(result.scalars().all())
+
+    from schemas.quiz import CategoryResponse
+    cats_dump = [CategoryResponse.model_validate(c).model_dump(mode="json") for c in cats]
+
+    await set_cache(cache_key, cats_dump, expire_seconds=600)
+    return cats_dump, False
 
 async def delete_category(db: AsyncSession, category_id: int) -> None:
     query = select(Category).filter(Category.id == category_id)
-    result = await db.execute(query)
-    cat = result.scalars().first()
+    res = await db.execute(query)
+    cat = res.scalars().first()
     if not cat:
         raise CategoryNotFoundError()
     await db.delete(cat)
     await db.commit()
+    await invalidate_pattern("categories:*")
 
 # ── Quiz Controller ──────────────────────────────────────────────────────────
 async def create_quiz(db: AsyncSession, quiz_in: QuizCreate, creator_id: int) -> Quiz:
@@ -81,6 +95,7 @@ async def create_quiz(db: AsyncSession, quiz_in: QuizCreate, creator_id: int) ->
     )
     db.add(new_quiz)
     await db.commit()
+    await invalidate_pattern("quizzes:*")
     return await get_quiz_by_id(db, new_quiz.id)
 
 async def get_all_quizzes(
@@ -88,28 +103,57 @@ async def get_all_quizzes(
     category_id: int | None = None,
     status: QuizStatus | None = None,
     search: str | None = None,
-    limit: int = 50,
-    offset: int = 0,
-) -> list[Quiz]:
+    page: int = 1,
+    limit: int = 9,
+) -> tuple[dict, bool]:
+    cache_key = f"quizzes:cat_{category_id}:status_{status}:s_{search}:p_{page}:l_{limit}"
+    cached_data = await get_cache(cache_key)
+    if cached_data:
+        return cached_data, True
+
     query = select(Quiz).options(
         selectinload(Quiz.category),
         selectinload(Quiz.creator)
     )
+    count_query = select(func.count()).select_from(Quiz)
+
     if category_id is not None:
         query = query.filter(Quiz.category_id == category_id)
+        count_query = count_query.filter(Quiz.category_id == category_id)
     if status is not None:
         query = query.filter(Quiz.status == status)
+        count_query = count_query.filter(Quiz.status == status)
     if search and search.strip():
         search_pattern = f"%{search.strip()}%"
-        query = query.filter(
-            or_(
-                Quiz.title.ilike(search_pattern),
-                Quiz.description.ilike(search_pattern)
-            )
+        filter_cond = or_(
+            Quiz.title.ilike(search_pattern),
+            Quiz.description.ilike(search_pattern)
         )
-    query = query.offset(offset).limit(limit)
+        query = query.filter(filter_cond)
+        count_query = count_query.filter(filter_cond)
+
+    total_res = await db.execute(count_query)
+    total = total_res.scalar_one()
+
+    offset = (page - 1) * limit
+    query = query.order_by(Quiz.created_at.desc()).offset(offset).limit(limit)
+
     result = await db.execute(query)
-    return result.scalars().all()
+    items = list(result.scalars().all())
+
+    pages = (total + limit - 1) // limit if limit > 0 else 1
+
+    items_dump = [QuizResponse.model_validate(item).model_dump(mode="json") for item in items]
+
+    res_dict = {
+        "items": items_dump,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "pages": max(pages, 1),
+    }
+    await set_cache(cache_key, res_dict, expire_seconds=300)
+    return res_dict, False
 
 async def get_quiz_by_id(db: AsyncSession, quiz_id: int) -> Quiz:
     query = select(Quiz).options(
@@ -149,6 +193,7 @@ async def delete_quiz(db: AsyncSession, quiz_id: int) -> None:
     
     await db.delete(quiz)
     await db.commit()
+    await invalidate_pattern("quizzes:*")
 
 async def publish_quiz(db: AsyncSession, quiz_id: int) -> Quiz:
     quiz = await get_quiz_by_id(db, quiz_id)
@@ -162,6 +207,7 @@ async def publish_quiz(db: AsyncSession, quiz_id: int) -> Quiz:
     quiz.published_at = datetime.now(timezone.utc)
     db.add(quiz)
     await db.commit()
+    await invalidate_pattern("quizzes:*")
     return await get_quiz_by_id(db, quiz_id)
 
 async def close_quiz(db: AsyncSession, quiz_id: int) -> Quiz:
@@ -173,6 +219,7 @@ async def close_quiz(db: AsyncSession, quiz_id: int) -> Quiz:
     quiz.closed_at = datetime.now(timezone.utc)
     db.add(quiz)
     await db.commit()
+    await invalidate_pattern("quizzes:*")
     return await get_quiz_by_id(db, quiz_id)
 
 async def reopen_quiz(db: AsyncSession, quiz_id: int) -> Quiz:
@@ -184,6 +231,7 @@ async def reopen_quiz(db: AsyncSession, quiz_id: int) -> Quiz:
     quiz.closed_at = None
     db.add(quiz)
     await db.commit()
+    await invalidate_pattern("quizzes:*")
     return await get_quiz_by_id(db, quiz_id)
 
 
@@ -192,6 +240,7 @@ async def release_results(db: AsyncSession, quiz_id: int) -> Quiz:
     quiz.results_visible = True
     db.add(quiz)
     await db.commit()
+    await invalidate_pattern("quizzes:*")
     return await get_quiz_by_id(db, quiz_id)
 
 # ── Question Controller ──────────────────────────────────────────────────────

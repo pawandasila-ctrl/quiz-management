@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request, Response
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from config.database import DbSession
@@ -15,6 +15,9 @@ from controllers import quiz as quiz_controller
 from controllers import result as result_controller
 from utils.exceptions import PracticeException
 from utils.crypto import decrypt_payload, decrypted_body
+from schemas.quiz import (
+    QuizResponse, QuizStudentResponse, PaginatedQuizResponse
+)
 
 
 router = APIRouter(
@@ -22,20 +25,25 @@ router = APIRouter(
     tags=["Student Features"]
 )
 
-@router.get("/quiz", response_model=List[QuizResponse])
+@router.get("/quiz", response_model=PaginatedQuizResponse)
 @limiter.limit("60/minute")
 async def list_published_quizzes(
     request: Request,
+    response: Response,
     db: DbSession,
     current_user: User = Depends(require_role([UserRole.STUDENT])),
     category_id: int | None = Query(None),
     search: str | None = Query(None, description="Search by title or description"),
-    limit: int = Query(50, ge=1, le=200, description="Max results to return"),
-    offset: int = Query(0, ge=0, description="Number of results to skip")
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(9, ge=1, le=100, description="Items per page")
 ):
-    return await quiz_controller.get_all_quizzes(
-        db, status=QuizStatus.PUBLISHED, category_id=category_id, search=search, limit=limit, offset=offset
+    data, is_cached = await quiz_controller.get_all_quizzes(
+        db, status=QuizStatus.PUBLISHED, category_id=category_id, search=search, page=page, limit=limit
     )
+    response.headers["X-Cache"] = "HIT" if is_cached else "MISS"
+    response.headers["Cache-Control"] = "private, max-age=60"
+    response.headers["Vary"] = "Accept-Encoding, Cookie"
+    return data
 
 @router.get("/quiz/{id}", response_model=QuizStudentResponse)
 @limiter.limit("30/minute")

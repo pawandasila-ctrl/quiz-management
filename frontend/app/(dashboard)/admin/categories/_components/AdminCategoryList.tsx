@@ -2,12 +2,13 @@
 
 import React from "react";
 import { useAdminCategories, useDeleteCategory } from "@/modules/quiz/hooks";
-import { Loader2, FolderOpen, Trash2 } from "lucide-react";
+import { FolderOpen, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { useAuth } from "@/lib/auth-context";
 
@@ -20,9 +21,10 @@ interface AdminCategoryListProps {
 export default function AdminCategoryList({
   initialCategories,
 }: AdminCategoryListProps) {
-  const { data: categories, isLoading: isCategoriesLoading } = useAdminCategories({
-    initialData: initialCategories,
-  });
+  const { data: categories, isLoading: isCategoriesLoading } =
+    useAdminCategories({
+      initialData: initialCategories,
+    });
   const deleteCategoryMutation = useDeleteCategory();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
@@ -31,8 +33,20 @@ export default function AdminCategoryList({
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div
+            key={i}
+            className="p-4 rounded-xl border border-border bg-card space-y-3 animate-pulse"
+          >
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-5 w-28 rounded-md" />
+              <Skeleton className="h-4 w-12 rounded-md" />
+            </div>
+            <Skeleton className="h-4 w-full rounded-md" />
+            <Skeleton className="h-3 w-20 rounded-md pt-1" />
+          </div>
+        ))}
       </div>
     );
   }

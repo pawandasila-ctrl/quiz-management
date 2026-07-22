@@ -4,9 +4,10 @@ import React, { useCallback, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter, usePathname } from "next/navigation";
-import { LogOut, Loader2, GraduationCap, Sparkles } from "lucide-react";
+import { LogOut, GraduationCap, Sparkles, AlertCircle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
   Sidebar,
@@ -69,14 +70,80 @@ export default function DashboardShell({ children }: DashboardShellProps) {
     return last.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   }, [pathname, isAdmin]);
 
-  if (loading || !user) {
+  // Render Skeleton UI while checking initial authentication state
+  if (loading) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm font-medium text-muted-foreground">
-            Loading workspace...
-          </p>
+      <div className="flex h-screen w-screen overflow-hidden bg-background">
+        {/* Sidebar Skeleton */}
+        <div className="w-64 border-r border-border bg-sidebar p-4 space-y-6 shrink-0 hidden md:block">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-9 w-9 rounded-lg" />
+            <div className="space-y-1.5 flex-1">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+          </div>
+          <div className="space-y-2 pt-4">
+            <Skeleton className="h-3 w-20 mb-2" />
+            <Skeleton className="h-9 w-full rounded-lg" />
+            <Skeleton className="h-9 w-full rounded-lg" />
+            <Skeleton className="h-9 w-full rounded-lg" />
+          </div>
+        </div>
+
+        {/* Main Content Skeleton */}
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <header className="flex h-14 items-center border-b border-border px-6">
+            <Skeleton className="h-5 w-32" />
+          </header>
+          <main className="flex-1 p-6 space-y-6">
+            <div className="space-y-2">
+              <Skeleton className="h-7 w-48" />
+              <Skeleton className="h-4 w-80" />
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <Skeleton className="h-48 rounded-xl" />
+              <Skeleton className="h-48 rounded-xl" />
+              <Skeleton className="h-48 rounded-xl" />
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // Render Error UI if connection failed or session expired
+  if (!user) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background p-4">
+        <div className="text-center space-y-4 max-w-md p-6 rounded-xl border border-border bg-card shadow-sm">
+          <div className="h-12 w-12 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
+            <AlertCircle className="h-6 w-6" />
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold text-foreground">Authentication Error</h2>
+            <p className="text-xs text-muted-foreground">
+              Unable to verify your session or connect to the server backend.
+            </p>
+          </div>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => window.location.reload()}
+              className="text-xs gap-1.5"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Retry</span>
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => router.replace("/login")}
+              className="text-xs"
+            >
+              Go to Login
+            </Button>
+          </div>
         </div>
       </div>
     );

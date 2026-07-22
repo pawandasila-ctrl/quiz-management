@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import CreateQuizButton from "./_components/CreateQuizButton";
 import AdminQuizList from "./_components/AdminQuizList";
 import { serverFetch } from "@/lib/server-api";
-import { Quiz } from "@/modules/quiz/types";
+import { Quiz, PaginatedResponse } from "@/modules/quiz/types";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPage() {
-  const initialQuizzes = await serverFetch<Quiz[]>("/admin/quiz");
+  const initialQuizzes = await serverFetch<PaginatedResponse<Quiz>>("/admin/quiz");
 
   return (
     <div className="space-y-6">

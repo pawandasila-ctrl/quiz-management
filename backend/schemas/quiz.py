@@ -137,3 +137,13 @@ class QuizStudentResponse(BaseModel):
     category: Optional[CategoryResponse] = None
     questions: List[QuestionStudentResponse] = []
     model_config = ConfigDict(from_attributes=True)
+
+class PaginatedQuizResponse(BaseModel):
+    """Paginated quiz wrapper response."""
+    items: List[QuizResponse]
+    total: int
+    page: int
+    limit: int
+    pages: int
+    model_config = ConfigDict(from_attributes=True)
+

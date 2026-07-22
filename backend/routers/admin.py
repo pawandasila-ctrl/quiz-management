@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, status, Query, File, UploadFile, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from config.database import DbSession
 from config.security import require_role
@@ -6,7 +6,8 @@ from models.user import UserRole, User
 from schemas.user import UserResponse
 from schemas.quiz import (
     CategoryCreate, CategoryResponse, QuizCreate, QuizUpdate, QuizResponse,
-    QuizFullResponse, QuestionCreate, QuestionResponse, OptionCreate, OptionResponse
+    QuizFullResponse, QuestionCreate, QuestionResponse, OptionCreate, OptionResponse,
+    PaginatedQuizResponse
 )
 from schemas.result import EnrollmentCreate, EnrollmentResponse, QuizAttemptResponse, LeaderboardEntry, AdminQuizAttemptResponse
 from controllers import quiz as quiz_controller
@@ -63,8 +64,12 @@ async def create_category(category_in: CategoryCreate, db: DbSession):
     return await quiz_controller.create_category(db, category_in)
 
 @router.get("/categories", response_model=List[CategoryResponse])
-async def list_categories(db: DbSession):
-    return await quiz_controller.get_categories(db)
+async def list_categories(db: DbSession, response: Response):
+    data, is_cached = await quiz_controller.get_categories(db)
+    response.headers["X-Cache"] = "HIT" if is_cached else "MISS"
+    response.headers["Cache-Control"] = "public, max-age=600"
+    response.headers["Vary"] = "Accept-Encoding, Cookie"
+    return data
 
 @router.delete("/categories/{id}", status_code=status.HTTP_200_OK, dependencies=[Depends(require_role([UserRole.ADMIN]))])
 async def delete_category(id: int, db: DbSession):
@@ -86,18 +91,23 @@ async def create_quiz(
     except PracticeException as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
-@router.get("/quiz", response_model=List[QuizResponse])
+@router.get("/quiz", response_model=PaginatedQuizResponse)
 async def list_quizzes(
     db: DbSession,
+    response: Response,
     category_id: int | None = Query(None),
     status: quiz_controller.QuizStatus | None = Query(None),
     search: str | None = Query(None, description="Search by title or description"),
-    limit: int = Query(50, ge=1, le=200, description="Max results to return"),
-    offset: int = Query(0, ge=0, description="Number of results to skip")
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(9, ge=1, le=100, description="Items per page")
 ):
-    return await quiz_controller.get_all_quizzes(
-        db, category_id=category_id, status=status, search=search, limit=limit, offset=offset
+    data, is_cached = await quiz_controller.get_all_quizzes(
+        db, category_id=category_id, status=status, search=search, page=page, limit=limit
     )
+    response.headers["X-Cache"] = "HIT" if is_cached else "MISS"
+    response.headers["Cache-Control"] = "private, max-age=60"
+    response.headers["Vary"] = "Accept-Encoding, Cookie"
+    return data
 
 @router.get("/quiz/{id}", response_model=QuizFullResponse)
 async def get_quiz_details(id: int, db: DbSession):

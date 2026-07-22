@@ -3,13 +3,14 @@
 import React from "react";
 import { useStudentQuizzes, useStudentAttempts } from "@/modules/quiz/hooks";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, AlertCircle, ClipboardCheck } from "lucide-react";
+import { AlertCircle, ClipboardCheck } from "lucide-react";
 import StudentQuizCard from "@/modules/quiz/components/student-quiz-card";
+import { QuizGridSkeleton } from "@/modules/quiz/components/QuizCardSkeleton";
 
-import { Quiz, QuizAttempt } from "@/modules/quiz/types";
+import { Quiz, QuizAttempt, PaginatedResponse } from "@/modules/quiz/types";
 
 interface StudentQuizListProps {
-  initialQuizzes?: Quiz[];
+  initialQuizzes?: PaginatedResponse<Quiz> | Quiz[];
   initialAttempts?: QuizAttempt[];
 }
 
@@ -17,25 +18,37 @@ export default function StudentQuizList({
   initialQuizzes,
   initialAttempts,
 }: StudentQuizListProps) {
+  const formattedInitialData: PaginatedResponse<Quiz> | undefined = React.useMemo(() => {
+    if (!initialQuizzes) return undefined;
+    if (Array.isArray(initialQuizzes)) {
+      return {
+        items: initialQuizzes,
+        total: initialQuizzes.length,
+        page: 1,
+        limit: 10,
+        pages: 1,
+      };
+    }
+    return initialQuizzes;
+  }, [initialQuizzes]);
+
   const {
-    data: quizzes,
+    data: quizData,
     isLoading: isQuizzesLoading,
     error: quizzesError,
-  } = useStudentQuizzes({ initialData: initialQuizzes });
+  } = useStudentQuizzes(undefined, { initialData: formattedInitialData });
 
   const { data: attempts, isLoading: isAttemptsLoading } = useStudentAttempts({
     initialData: initialAttempts,
   });
 
+  const quizzes = quizData?.items || [];
+
   const isLoading =
-    (isQuizzesLoading || isAttemptsLoading) && !quizzes && !attempts;
+    (isQuizzesLoading || isAttemptsLoading) && !quizData && !attempts;
 
   if (isLoading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <QuizGridSkeleton count={6} />;
   }
 
   if (quizzesError) {

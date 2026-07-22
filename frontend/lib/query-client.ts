@@ -19,6 +19,8 @@ const queryClient = new QueryClient({
       },
       refetchOnWindowFocus: process.env.NODE_ENV === "production",
       staleTime: 3 * 60 * 1000,
+      refetchOnMount: false,
+      gcTime: 10 * 60 * 1000,
     },
     mutations: {
       onError: (error) => {

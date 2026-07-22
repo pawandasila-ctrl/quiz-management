@@ -115,3 +115,19 @@ export interface LeaderboardEntry {
   time_taken_seconds: number;
   submitted_at: string;
 }
+
+export interface QuizFilterParams {
+  category_id?: number | null;
+  status?: string | null;
+  search?: string | null;
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}

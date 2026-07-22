@@ -1,15 +1,32 @@
 "use client";
 
 import React from "react";
-import { useStudentQuizDetails, useQuizLeaderboard } from "@/modules/quiz/hooks";
+import {
+  useStudentQuizDetails,
+  useQuizLeaderboard,
+} from "@/modules/quiz/hooks";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Trophy, Clock, ArrowLeft, AlertCircle, Medal } from "lucide-react";
+import { Trophy, Clock, ArrowLeft, AlertCircle, Medal } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { Quiz } from "@/modules/quiz/types";
 import { LeaderboardEntry } from "@/modules/quiz/types";
@@ -29,20 +46,45 @@ export default function QuizLeaderboard({
   const { user } = useAuth();
 
   // 1. Fetch Quiz Details
-  const { data: quiz, isLoading: isQuizLoading } = useStudentQuizDetails(quizId, {
-    initialData: initialQuiz,
-  });
+  const { data: quiz, isLoading: isQuizLoading } = useStudentQuizDetails(
+    quizId,
+    {
+      initialData: initialQuiz,
+    },
+  );
 
   // 2. Fetch Leaderboard
-  const { data: leaderboard, isLoading: isLeaderboardLoading, error } =
-    useQuizLeaderboard(quizId, { initialData: initialLeaderboard });
+  const {
+    data: leaderboard,
+    isLoading: isLeaderboardLoading,
+    error,
+  } = useQuizLeaderboard(quizId, { initialData: initialLeaderboard });
 
-  const isLoading = (isQuizLoading || isLeaderboardLoading) && !quiz && !leaderboard;
+  const isLoading =
+    (isQuizLoading || isLeaderboardLoading) && !quiz && !leaderboard;
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="space-y-6 animate-pulse">
+        <div className="p-6 rounded-xl border border-border bg-card space-y-3">
+          <Skeleton className="h-7 w-48 rounded-md" />
+          <Skeleton className="h-4 w-72 rounded-md" />
+        </div>
+        <div className="p-4 rounded-xl border border-border bg-card space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between py-2 border-b border-border/40"
+            >
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-6 w-6 rounded-full" />
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <Skeleton className="h-4 w-32 rounded-md" />
+              </div>
+              <Skeleton className="h-5 w-20 rounded-md" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -55,12 +97,18 @@ export default function QuizLeaderboard({
           <div>
             <h3 className="font-semibold text-lg">Leaderboard Unavailable</h3>
             <p className="text-sm">
-              The leaderboard for this quiz has not been released by the administrator yet.
+              The leaderboard for this quiz has not been released by the
+              administrator yet.
             </p>
           </div>
         </div>
         <div className="mt-4">
-          <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")} className="gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push("/dashboard")}
+            className="gap-2"
+          >
             <ArrowLeft className="h-4 w-4" /> Back to Dashboard
           </Button>
         </div>
@@ -95,7 +143,11 @@ export default function QuizLeaderboard({
           </div>
         );
       default:
-        return <span className="font-semibold text-muted-foreground text-sm pl-2">{rank}</span>;
+        return (
+          <span className="font-semibold text-muted-foreground text-sm pl-2">
+            {rank}
+          </span>
+        );
     }
   };
 
@@ -111,7 +163,12 @@ export default function QuizLeaderboard({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")} className="gap-1.5 border-border">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => router.push("/dashboard")}
+          className="gap-1.5 border-border"
+        >
           <ArrowLeft className="h-3.5 w-3.5" /> Back
         </Button>
       </div>
@@ -138,9 +195,15 @@ export default function QuizLeaderboard({
                   <TableRow className="border-b border-border">
                     <TableHead className="w-16 font-semibold">Rank</TableHead>
                     <TableHead className="font-semibold">Student</TableHead>
-                    <TableHead className="text-right font-semibold">Score</TableHead>
-                    <TableHead className="text-right font-semibold">Time Taken</TableHead>
-                    <TableHead className="text-right font-semibold hidden md:table-cell">Submitted At</TableHead>
+                    <TableHead className="text-right font-semibold">
+                      Score
+                    </TableHead>
+                    <TableHead className="text-right font-semibold">
+                      Time Taken
+                    </TableHead>
+                    <TableHead className="text-right font-semibold hidden md:table-cell">
+                      Submitted At
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -155,7 +218,9 @@ export default function QuizLeaderboard({
                             : "hover:bg-muted/40"
                         }`}
                       >
-                        <TableCell className="align-middle">{getRankBadge(entry.rank)}</TableCell>
+                        <TableCell className="align-middle">
+                          {getRankBadge(entry.rank)}
+                        </TableCell>
                         <TableCell className="align-middle">
                           <div className="flex items-center gap-2.5">
                             <Avatar className="h-8 w-8 border border-border">
@@ -166,7 +231,10 @@ export default function QuizLeaderboard({
                             <span className="text-foreground text-sm">
                               {entry.student_name}
                               {isCurrentUser && (
-                                <Badge variant="outline" className="ml-2 text-[10px] border-primary/20 bg-primary/5 text-primary">
+                                <Badge
+                                  variant="outline"
+                                  className="ml-2 text-[10px] border-primary/20 bg-primary/5 text-primary"
+                                >
                                   You
                                 </Badge>
                               )}
@@ -183,7 +251,11 @@ export default function QuizLeaderboard({
                           </span>
                         </TableCell>
                         <TableCell className="text-right align-middle text-muted-foreground text-xs hidden md:table-cell">
-                          {new Date(entry.submitted_at).toLocaleDateString()} {new Date(entry.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(entry.submitted_at).toLocaleDateString()}{" "}
+                          {new Date(entry.submitted_at).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </TableCell>
                       </TableRow>
                     );

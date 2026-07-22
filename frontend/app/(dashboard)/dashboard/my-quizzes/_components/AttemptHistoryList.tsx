@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useStudentAttempts } from "@/modules/quiz/hooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Loader2,
   AlertCircle,
   Calendar,
   Clock,
@@ -45,7 +45,11 @@ interface AttemptHistoryListProps {
 export default function AttemptHistoryList({
   initialAttempts,
 }: AttemptHistoryListProps) {
-  const { data: attempts, isLoading: isAttemptsLoading, error } = useStudentAttempts({
+  const {
+    data: attempts,
+    isLoading: isAttemptsLoading,
+    error,
+  } = useStudentAttempts({
     initialData: initialAttempts,
   });
   const isLoading = isAttemptsLoading && !attempts;
@@ -88,8 +92,23 @@ export default function AttemptHistoryList({
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="space-y-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="rounded-xl border border-border p-5 space-y-3 bg-card animate-pulse"
+          >
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-5 w-40 rounded-md" />
+              <Skeleton className="h-4 w-20 rounded-md" />
+            </div>
+            <Skeleton className="h-4 w-3/4 rounded-md" />
+            <div className="flex items-center justify-between pt-2 border-t border-border/40">
+              <Skeleton className="h-3 w-32 rounded-md" />
+              <Skeleton className="h-7 w-24 rounded-md" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
@@ -144,9 +163,7 @@ export default function AttemptHistoryList({
             </div>
             <span
               className={`text-xs font-medium shrink-0 ${
-                group.results_visible
-                  ? "text-emerald-600"
-                  : "text-amber-600"
+                group.results_visible ? "text-emerald-600" : "text-amber-600"
               }`}
             >
               {group.results_visible ? "Results released" : "Pending results"}
@@ -206,7 +223,9 @@ export default function AttemptHistoryList({
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {formatDate(attempt.submitted_at || attempt.started_at)}
+                            {formatDate(
+                              attempt.submitted_at || attempt.started_at,
+                            )}
                           </span>
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
