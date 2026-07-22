@@ -61,11 +61,12 @@ export function useActiveQuizAttempt(quizId: number, options?: { enabled?: boole
   });
 }
 
-export function useStudentQuizDetails(quizId: number) {
+export function useStudentQuizDetails(quizId: number, options?: { initialData?: Quiz }) {
   return useQuery<Quiz, Error>({
     queryKey: ["student-quiz-details", quizId],
     queryFn: () => getStudentQuizDetailsRequest(quizId),
     enabled: !isNaN(quizId),
+    initialData: options?.initialData,
   });
 }
 

@@ -29,7 +29,9 @@ export default function QuizLeaderboard({
   const { user } = useAuth();
 
   // 1. Fetch Quiz Details
-  const { data: quiz, isLoading: isQuizLoading } = useStudentQuizDetails(quizId);
+  const { data: quiz, isLoading: isQuizLoading } = useStudentQuizDetails(quizId, {
+    initialData: initialQuiz,
+  });
 
   // 2. Fetch Leaderboard
   const { data: leaderboard, isLoading: isLeaderboardLoading, error } =
