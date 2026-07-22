@@ -36,8 +36,19 @@ function formatDuration(seconds?: number | null) {
   return `${mins}m ${secs}s`;
 }
 
-export default function AttemptHistoryList() {
-  const { data: attempts, isLoading, error } = useStudentAttempts();
+import { QuizAttempt } from "@/modules/quiz/types";
+
+interface AttemptHistoryListProps {
+  initialAttempts?: QuizAttempt[];
+}
+
+export default function AttemptHistoryList({
+  initialAttempts,
+}: AttemptHistoryListProps) {
+  const { data: attempts, isLoading: isAttemptsLoading, error } = useStudentAttempts({
+    initialData: initialAttempts,
+  });
+  const isLoading = isAttemptsLoading && !attempts;
   const quizAttempts = React.useMemo(() => attempts || [], [attempts]);
 
   const groupedAttempts = React.useMemo(() => {

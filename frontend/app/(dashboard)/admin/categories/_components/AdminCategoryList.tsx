@@ -11,11 +11,23 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 
 import { useAuth } from "@/lib/auth-context";
 
-export default function AdminCategoryList() {
-  const { data: categories, isLoading } = useAdminCategories();
+import { Category } from "@/modules/quiz/types";
+
+interface AdminCategoryListProps {
+  initialCategories?: Category[];
+}
+
+export default function AdminCategoryList({
+  initialCategories,
+}: AdminCategoryListProps) {
+  const { data: categories, isLoading: isCategoriesLoading } = useAdminCategories({
+    initialData: initialCategories,
+  });
   const deleteCategoryMutation = useDeleteCategory();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
+
+  const isLoading = isCategoriesLoading && !categories;
 
   if (isLoading) {
     return (

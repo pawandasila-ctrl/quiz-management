@@ -2,13 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import AttemptHistoryList from "./_components/AttemptHistoryList";
 import { Button } from "@/components/ui/button";
+import { serverFetch } from "@/lib/server-api";
+import { QuizAttempt } from "@/modules/quiz/types";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Attempt History — Quiz System",
   description: "View all your past quiz attempt logs, grades, and detailed results.",
 };
 
-export default function MyQuizzesPage() {
+export default async function MyQuizzesPage() {
+  const initialAttempts = await serverFetch<QuizAttempt[]>("/student/attempts");
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 px-1 py-2">
       {/* Header */}
@@ -36,7 +42,7 @@ export default function MyQuizzesPage() {
       <div className="border-t border-border" />
 
       {/* Attempt List */}
-      <AttemptHistoryList />
+      <AttemptHistoryList initialAttempts={initialAttempts || undefined} />
     </div>
   );
 }

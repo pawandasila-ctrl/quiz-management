@@ -37,17 +37,19 @@ import { User, UserRole } from "../../auth/types";
 
 // ── Student Hooks ───────────────────────────────────────────────────────────
 
-export function useStudentQuizzes() {
+export function useStudentQuizzes(options?: { initialData?: Quiz[] }) {
   return useQuery<Quiz[], Error>({
     queryKey: ["student-quizzes"],
     queryFn: getStudentQuizzesRequest,
+    initialData: options?.initialData,
   });
 }
 
-export function useStudentAttempts() {
+export function useStudentAttempts(options?: { initialData?: QuizAttempt[] }) {
   return useQuery<QuizAttempt[], Error>({
     queryKey: ["student-attempts"],
     queryFn: getStudentAttemptsRequest,
+    initialData: options?.initialData,
   });
 }
 
@@ -102,11 +104,12 @@ export function useFinalizeAttempt(quizId: number) {
   });
 }
 
-export function useQuizLeaderboard(quizId: number) {
+export function useQuizLeaderboard(quizId: number, options?: { initialData?: LeaderboardEntry[] }) {
   return useQuery<LeaderboardEntry[], Error>({
     queryKey: ["quiz-leaderboard", quizId],
     queryFn: () => getQuizLeaderboardRequest(quizId),
     enabled: !isNaN(quizId),
+    initialData: options?.initialData,
   });
 }
 
@@ -127,10 +130,11 @@ export function useQuizAttemptResult(
 
 // ── Admin Hooks ─────────────────────────────────────────────────────────────
 
-export function useAdminQuizzes() {
+export function useAdminQuizzes(options?: { initialData?: Quiz[] }) {
   return useQuery<Quiz[], Error>({
     queryKey: ["admin-quizzes"],
     queryFn: getAdminQuizzesRequest,
+    initialData: options?.initialData,
   });
 }
 
@@ -150,17 +154,19 @@ export function useAdminQuizAttempts(quizId: number) {
   });
 }
 
-export function useAdminCategories() {
+export function useAdminCategories(options?: { initialData?: Category[] }) {
   return useQuery<Category[], Error>({
     queryKey: ["admin-categories"],
     queryFn: getAdminCategoriesRequest,
+    initialData: options?.initialData,
   });
 }
 
-export function useAdminUsers() {
+export function useAdminUsers(options?: { initialData?: User[] }) {
   return useQuery<User[], Error>({
     queryKey: ["admin-users"],
     queryFn: getAdminUsersRequest,
+    initialData: options?.initialData,
   });
 }
 

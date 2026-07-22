@@ -2,13 +2,23 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import StudentQuizList from "./_components/StudentQuizList";
+import { serverFetch } from "@/lib/server-api";
+import { Quiz, QuizAttempt } from "@/modules/quiz/types";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Student Portal — Quiz System",
   description: "Browse published quizzes, take assessments, and review results.",
 };
 
-export default function StudentDashboardPage() {
+export default async function StudentDashboardPage() {
+  // Parallel server-side pre-fetching to eliminate client waterfalls
+  const [initialQuizzes, initialAttempts] = await Promise.all([
+    serverFetch<Quiz[]>("/student/quiz"),
+    serverFetch<QuizAttempt[]>("/student/attempts"),
+  ]);
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4">
@@ -27,7 +37,10 @@ export default function StudentDashboardPage() {
         </div>
       </div>
 
-      <StudentQuizList />
+      <StudentQuizList
+        initialQuizzes={initialQuizzes || undefined}
+        initialAttempts={initialAttempts || undefined}
+      />
     </div>
   );
 }

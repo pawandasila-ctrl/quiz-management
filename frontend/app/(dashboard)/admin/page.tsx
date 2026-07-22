@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
 import CreateQuizButton from "./_components/CreateQuizButton";
 import AdminQuizList from "./_components/AdminQuizList";
+import { serverFetch } from "@/lib/server-api";
+import { Quiz } from "@/modules/quiz/types";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Admin Console — Quiz Library",
   description: "Manage exam papers, published results, and build quizzes.",
 };
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  const initialQuizzes = await serverFetch<Quiz[]>("/admin/quiz");
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -20,7 +26,7 @@ export default function AdminPage() {
         <CreateQuizButton />
       </div>
 
-      <AdminQuizList />
+      <AdminQuizList initialQuizzes={initialQuizzes || undefined} />
     </div>
   );
 }

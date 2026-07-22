@@ -5,8 +5,18 @@ import { useAdminUsers } from "@/modules/quiz/hooks";
 import { Loader2 } from "lucide-react";
 import UserTable from "@/modules/admin/components/UserTable";
 
-export default function AdminUserList() {
-  const { data: users, isLoading } = useAdminUsers();
+import { User } from "@/modules/auth/types";
+
+interface AdminUserListProps {
+  initialUsers?: User[];
+}
+
+export default function AdminUserList({ initialUsers }: AdminUserListProps) {
+  const { data: users, isLoading: isUsersLoading } = useAdminUsers({
+    initialData: initialUsers,
+  });
+
+  const isLoading = isUsersLoading && !users;
 
   if (isLoading) {
     return (

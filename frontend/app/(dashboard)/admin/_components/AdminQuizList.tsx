@@ -5,8 +5,18 @@ import { useAdminQuizzes } from "@/modules/quiz/hooks";
 import { Loader2, Plus } from "lucide-react";
 import QuizCard from "@/modules/quiz/components/QuizCard";
 
-export default function AdminQuizList() {
-  const { data: quizzes, isLoading } = useAdminQuizzes();
+import { Quiz } from "@/modules/quiz/types";
+
+interface AdminQuizListProps {
+  initialQuizzes?: Quiz[];
+}
+
+export default function AdminQuizList({ initialQuizzes }: AdminQuizListProps) {
+  const { data: quizzes, isLoading: isQuizzesLoading } = useAdminQuizzes({
+    initialData: initialQuizzes,
+  });
+
+  const isLoading = isQuizzesLoading && !quizzes;
 
   if (isLoading) {
     return (

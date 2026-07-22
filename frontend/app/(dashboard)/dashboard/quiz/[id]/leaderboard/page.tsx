@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import React from "react";
 import QuizLeaderboard from "./_components/quiz-leaderboard";
+import { serverFetch } from "@/lib/server-api";
+import { LeaderboardEntry } from "@/modules/quiz/types";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -18,5 +20,14 @@ export default async function StudentLeaderboardRoute({ params }: PageProps) {
   const resolvedParams = await params;
   const quizId = Number(resolvedParams.id);
 
-  return <QuizLeaderboard quizId={quizId} />;
+  const initialLeaderboard = await serverFetch<LeaderboardEntry[]>(
+    `/student/quiz/${quizId}/leaderboard`
+  );
+
+  return (
+    <QuizLeaderboard
+      quizId={quizId}
+      initialLeaderboard={initialLeaderboard || undefined}
+    />
+  );
 }

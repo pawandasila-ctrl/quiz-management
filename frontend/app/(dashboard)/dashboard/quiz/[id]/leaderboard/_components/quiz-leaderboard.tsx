@@ -11,11 +11,20 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Trophy, Clock, ArrowLeft, AlertCircle, Medal } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
+import { Quiz } from "@/modules/quiz/types";
+import { LeaderboardEntry } from "@/modules/quiz/types";
+
 interface QuizLeaderboardProps {
   quizId: number;
+  initialQuiz?: Quiz;
+  initialLeaderboard?: LeaderboardEntry[];
 }
 
-export default function QuizLeaderboard({ quizId }: QuizLeaderboardProps) {
+export default function QuizLeaderboard({
+  quizId,
+  initialQuiz,
+  initialLeaderboard,
+}: QuizLeaderboardProps) {
   const router = useRouter();
   const { user } = useAuth();
 
@@ -23,9 +32,10 @@ export default function QuizLeaderboard({ quizId }: QuizLeaderboardProps) {
   const { data: quiz, isLoading: isQuizLoading } = useStudentQuizDetails(quizId);
 
   // 2. Fetch Leaderboard
-  const { data: leaderboard, isLoading: isLeaderboardLoading, error } = useQuizLeaderboard(quizId);
+  const { data: leaderboard, isLoading: isLeaderboardLoading, error } =
+    useQuizLeaderboard(quizId, { initialData: initialLeaderboard });
 
-  const isLoading = isQuizLoading || isLeaderboardLoading;
+  const isLoading = (isQuizLoading || isLeaderboardLoading) && !quiz && !leaderboard;
 
   if (isLoading) {
     return (
