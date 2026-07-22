@@ -91,10 +91,13 @@ async def list_quizzes(
     db: DbSession,
     category_id: int | None = Query(None),
     status: quiz_controller.QuizStatus | None = Query(None),
+    search: str | None = Query(None, description="Search by title or description"),
     limit: int = Query(50, ge=1, le=200, description="Max results to return"),
     offset: int = Query(0, ge=0, description="Number of results to skip")
 ):
-    return await quiz_controller.get_all_quizzes(db, category_id=category_id, status=status, limit=limit, offset=offset)
+    return await quiz_controller.get_all_quizzes(
+        db, category_id=category_id, status=status, search=search, limit=limit, offset=offset
+    )
 
 @router.get("/quiz/{id}", response_model=QuizFullResponse)
 async def get_quiz_details(id: int, db: DbSession):

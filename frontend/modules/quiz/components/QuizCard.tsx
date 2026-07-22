@@ -27,6 +27,7 @@ import {
   Trash2,
   Loader2,
   RefreshCw,
+  Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -135,14 +136,23 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
           <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2 h-10">
             {quiz.description || "No description provided."}
           </p>
-          {quiz.creator && (
-            <div className="mt-2 flex items-center gap-1.5 text-[11px]">
-              <span className="text-muted-foreground">Created by:</span>
-              <span className="font-medium text-foreground">
-                {quiz.creator.name}
+          <div className="mt-2.5 flex items-center justify-between gap-2 text-[11px] text-muted-foreground pt-2 border-t border-border/40">
+            {quiz.creator && (
+              <span className="truncate">
+                Created by: <span className="font-medium text-foreground">{quiz.creator.name}</span>
               </span>
-            </div>
-          )}
+            )}
+            {quiz.created_at && (
+              <span className="shrink-0 flex items-center gap-1 text-[11px]">
+                <Calendar className="h-3 w-3 text-muted-foreground" />
+                {new Date(quiz.created_at).toLocaleDateString([], {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 

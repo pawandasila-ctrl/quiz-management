@@ -28,10 +28,14 @@ async def list_published_quizzes(
     request: Request,
     db: DbSession,
     current_user: User = Depends(require_role([UserRole.STUDENT])),
+    category_id: int | None = Query(None),
+    search: str | None = Query(None, description="Search by title or description"),
     limit: int = Query(50, ge=1, le=200, description="Max results to return"),
     offset: int = Query(0, ge=0, description="Number of results to skip")
 ):
-    return await quiz_controller.get_all_quizzes(db, status=QuizStatus.PUBLISHED, limit=limit, offset=offset)
+    return await quiz_controller.get_all_quizzes(
+        db, status=QuizStatus.PUBLISHED, category_id=category_id, search=search, limit=limit, offset=offset
+    )
 
 @router.get("/quiz/{id}", response_model=QuizStudentResponse)
 @limiter.limit("30/minute")

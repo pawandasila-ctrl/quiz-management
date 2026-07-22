@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-from sqlalchemy import select, update, func, text
+from sqlalchemy import select, update, func, text, or_
 from sqlalchemy.orm import selectinload
 from models.quiz import Category, Quiz, Question, Option, QuizStatus
 from schemas.quiz import CategoryCreate, QuizCreate, QuizUpdate, QuestionCreate, OptionCreate
@@ -87,6 +87,7 @@ async def get_all_quizzes(
     db: AsyncSession,
     category_id: int | None = None,
     status: QuizStatus | None = None,
+    search: str | None = None,
     limit: int = 50,
     offset: int = 0,
 ) -> list[Quiz]:
@@ -98,6 +99,14 @@ async def get_all_quizzes(
         query = query.filter(Quiz.category_id == category_id)
     if status is not None:
         query = query.filter(Quiz.status == status)
+    if search and search.strip():
+        search_pattern = f"%{search.strip()}%"
+        query = query.filter(
+            or_(
+                Quiz.title.ilike(search_pattern),
+                Quiz.description.ilike(search_pattern)
+            )
+        )
     query = query.offset(offset).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()
