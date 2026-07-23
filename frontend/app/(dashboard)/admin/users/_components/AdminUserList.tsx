@@ -3,14 +3,7 @@
 import React, { useState } from "react";
 import { useAdminUsers } from "@/modules/admin/hooks";
 import { useDebounce } from "@/hooks/use-debounce";
-import {
-  Loader2,
-  Search,
-  X,
-  Filter,
-  UserCheck,
-  RotateCcw,
-} from "lucide-react";
+import { Loader2, Search, X, Filter, UserCheck, RotateCcw } from "lucide-react";
 import UserTable from "@/modules/admin/components/UserTable";
 import UserTableSkeleton from "@/modules/admin/components/UserTableSkeleton";
 import { Input } from "@/components/ui/input";
@@ -80,28 +73,26 @@ export default function AdminUserList({ initialUsers }: AdminUserListProps) {
 
   const isDefaultState = !hasActiveFilters && page === 1;
 
-  // Format initialData if array or PaginatedResponse
-  const formattedInitialData: PaginatedResponse<User> | undefined =
-    React.useMemo(() => {
-      if (!initialUsers) return undefined;
-      if (Array.isArray(initialUsers)) {
-        return {
-          items: initialUsers,
-          total: initialUsers.length,
-          page: 1,
-          limit: 10,
-          pages: 1,
-        };
-      }
-      return initialUsers;
-    }, [initialUsers]);
+  const [initialData] = useState<PaginatedResponse<User> | undefined>(() => {
+    if (!initialUsers) return undefined;
+    if (Array.isArray(initialUsers)) {
+      return {
+        items: initialUsers,
+        total: initialUsers.length,
+        page: 1,
+        limit: 10,
+        pages: 1,
+      };
+    }
+    return initialUsers;
+  });
 
   const isBlockedFilter =
     selectedStatus === "active"
       ? true
       : selectedStatus === "blocked"
-      ? false
-      : undefined;
+        ? false
+        : undefined;
 
   // Fetch paginated user data
   const {
@@ -117,8 +108,8 @@ export default function AdminUserList({ initialUsers }: AdminUserListProps) {
       limit: 10,
     },
     {
-      initialData: isDefaultState ? formattedInitialData : undefined,
-    }
+      initialData: isDefaultState ? initialData : undefined,
+    },
   );
 
   const users = userData?.items || [];
@@ -289,7 +280,7 @@ export default function AdminUserList({ initialUsers }: AdminUserListProps) {
                       {pageNum}
                     </Button>
                   </PaginationItem>
-                )
+                ),
               )}
 
               <PaginationItem>
