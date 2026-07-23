@@ -2,12 +2,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 from models.user import User, Session, UserRole
-from schemas.user import UserCreate, UserAdminUpdate
+from schemas.user import UserCreate, UserAdminUpdate, UserEnrichedResponse
 from config.security import hash_password
 from config.settings import settings
 from utils.exceptions import SessionNotFoundError, SessionExpiredError, DuplicateEmailError, UserNotFoundError
 from datetime import datetime, timedelta, timezone
 import secrets
+from sqlalchemy import func, or_
+import math
 
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
     """Query a user by their email address."""
@@ -15,15 +17,48 @@ async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
     result = await db.execute(query)
     return result.scalars().first()
 
-async def get_all_users(db: AsyncSession, limit: int = 50, offset: int = 0) -> list[dict]:
-    """Retrieve users with pagination, enriched with last_login_at from sessions."""
-    query = select(User).order_by(User.created_at.desc()).offset(offset).limit(limit)
-    result = await db.execute(query)
+async def get_all_users(
+    db: AsyncSession,
+    search: str | None = None,
+    role: UserRole | None = None,
+    is_active: bool | None = None,
+    page: int = 1,
+    limit: int = 10,
+) -> dict:
+    """Retrieve users with filtering and pagination, enriched with last_login_at from sessions."""
+
+    query = select(User)
+    filters = []
+
+    if role is not None:
+        filters.append(User.role == role)
+    if is_active is not None:
+        filters.append(User.is_active == is_active)
+    if search and search.strip():
+        pattern = f"%{search.strip()}%"
+        filters.append(
+            or_(
+                User.name.ilike(pattern),
+                User.email.ilike(pattern)
+            )
+        )
+
+    if filters:
+        query = query.filter(*filters)
+
+    # Calculate total matching count
+    count_query = select(func.count()).select_from(query.subquery())
+    total_res = await db.execute(count_query)
+    total = total_res.scalar_one()
+
+    # Pagination calculation
+    offset = (page - 1) * limit
+    paginated_query = query.order_by(User.created_at.desc()).offset(offset).limit(limit)
+    result = await db.execute(paginated_query)
     users = list(result.scalars().all())
 
-    enriched = []
+    items = []
     for user in users:
-        # Get most recent session updated_at as last_login_at
         sess_query = (
             select(Session)
             .filter(Session.user_id == user.id)
@@ -33,9 +68,20 @@ async def get_all_users(db: AsyncSession, limit: int = 50, offset: int = 0) -> l
         sess_result = await db.execute(sess_query)
         latest_session = sess_result.scalars().first()
         last_login_at = latest_session.updated_at if latest_session else None
-        enriched.append({"user": user, "last_login_at": last_login_at})
 
-    return enriched
+        user_dict = UserEnrichedResponse.model_validate(user)
+        user_dict.last_login_at = last_login_at
+        items.append(user_dict)
+
+    pages = math.ceil(total / limit) if limit > 0 else 1
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "pages": pages
+    }
 
 async def create_user(db: AsyncSession, user_in: UserCreate) -> User:
     """Create a new user. Always defaults to STUDENT role."""

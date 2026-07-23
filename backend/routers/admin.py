@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from config.database import DbSession
 from config.security import require_role
 from models.user import UserRole, User
-from schemas.user import UserResponse, UserEnrichedResponse, UserAdminUpdate
+from schemas.user import UserResponse, UserEnrichedResponse, UserAdminUpdate, PaginatedUserResponse
 from schemas.quiz import (
     CategoryCreate, CategoryResponse, QuizCreate, QuizUpdate, QuizResponse,
     QuizFullResponse, QuestionCreate, QuestionResponse, OptionCreate, OptionResponse,
@@ -253,21 +253,22 @@ async def get_quiz_leaderboard(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
 # ── User Management ──────────────────────────────────────────────────────────
-@router.get("/users", response_model=List[UserEnrichedResponse])
+@router.get("/users", response_model=PaginatedUserResponse)
 async def list_users(
     db: DbSession,
-    limit: int = Query(50, ge=1, le=200, description="Max results to return"),
-    offset: int = Query(0, ge=0, description="Number of results to skip"),
+    response: Response,
+    search: str | None = Query(None, description="Search by name or email"),
+    role: UserRole | None = Query(None, description="Filter by role"),
+    is_active: bool | None = Query(None, description="Filter by active/blocked status"),
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(10, ge=1, le=100, description="Items per page"),
     current_user: User = Depends(require_role([UserRole.ADMIN]))
 ):
-    enriched = await user_controller.get_all_users(db, limit=limit, offset=offset)
-    result = []
-    for item in enriched:
-        u = item["user"]
-        data = UserEnrichedResponse.model_validate(u)
-        data.last_login_at = item["last_login_at"]
-        result.append(data)
-    return result
+    data = await user_controller.get_all_users(
+        db, search=search, role=role, is_active=is_active, page=page, limit=limit
+    )
+    response.headers["Cache-Control"] = "private, max-age=30"
+    return data
 
 @router.put("/users/{id}/role", response_model=UserResponse)
 async def promote_user(

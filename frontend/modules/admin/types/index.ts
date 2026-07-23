@@ -9,6 +9,14 @@ export interface UpdateUserPayload {
   image?: string | null;
 }
 
+export interface UserFilterParams {
+  search?: string;
+  role?: UserRole;
+  is_active?: boolean;
+  page?: number;
+  limit?: number;
+}
+
 // ── Quiz ──────────────────────────────────────────────────────────────────────
 
 export interface CreateQuizPayload {

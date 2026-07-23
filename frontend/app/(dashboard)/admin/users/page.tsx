@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import AdminUserList from "./_components/AdminUserList";
 import { serverFetch } from "@/lib/server-api";
 import { User } from "@/modules/auth/types";
+import { PaginatedResponse } from "@/modules/quiz/types";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminUsersPage() {
-  const initialUsers = await serverFetch<User[]>("/admin/users");
+  const initialUsers = await serverFetch<PaginatedResponse<User>>("/admin/users?page=1&limit=10");
 
   return (
     <div className="space-y-6">

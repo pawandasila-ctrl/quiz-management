@@ -9,6 +9,7 @@ import {
 import { User, UserRole } from "@/modules/auth/types";
 import {
   UpdateUserPayload,
+  UserFilterParams,
   CreateQuizPayload,
   CreateCategoryPayload,
   CreateQuestionPayload,
@@ -115,8 +116,12 @@ export async function deleteQuestionRequest(questionId: number): Promise<void> {
 
 // ── Users ─────────────────────────────────────────────────────────────────────
 
-export async function getAdminUsersRequest(): Promise<User[]> {
-  const res = await axiosClient.get<User[]>("/admin/users");
+export async function getAdminUsersRequest(
+  params?: UserFilterParams,
+): Promise<PaginatedResponse<User>> {
+  const res = await axiosClient.get<PaginatedResponse<User>>("/admin/users", {
+    params,
+  });
   return res.data;
 }
 

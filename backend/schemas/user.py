@@ -1,3 +1,4 @@
+from typing import List
 from pydantic import BaseModel, ConfigDict, Field, EmailStr
 from typing import Optional
 from datetime import datetime
@@ -41,6 +42,15 @@ class UserResponse(BaseModel):
 
 class UserEnrichedResponse(UserResponse):
     last_login_at: Optional[datetime] = None
+
+class PaginatedUserResponse(BaseModel):
+    """Paginated user response."""
+    items: List[UserEnrichedResponse]
+    total: int
+    page: int
+    limit: int
+    pages: int
+    model_config = ConfigDict(from_attributes=True)
 
 class UserLoginResponse(BaseModel):
     access_token: str

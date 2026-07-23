@@ -28,6 +28,7 @@ import {
   CreateCategoryPayload,
   CreateQuestionPayload,
   UpdateUserPayload,
+  UserFilterParams,
 } from "@/modules/admin/types";
 import { Quiz, Category, QuizAttempt, PaginatedResponse, QuizFilterParams } from "@/modules/quiz/types";
 import { User, UserRole } from "@/modules/auth/types";
@@ -69,10 +70,13 @@ export function useAdminCategories(options?: { initialData?: Category[] }) {
   });
 }
 
-export function useAdminUsers(options?: { initialData?: User[] }) {
-  return useQuery<User[], Error>({
-    queryKey: ["admin-users"],
-    queryFn: getAdminUsersRequest,
+export function useAdminUsers(
+  params?: UserFilterParams,
+  options?: { initialData?: PaginatedResponse<User> }
+) {
+  return useQuery<PaginatedResponse<User>, Error>({
+    queryKey: ["admin-users", params],
+    queryFn: () => getAdminUsersRequest(params),
     initialData: options?.initialData,
   });
 }
