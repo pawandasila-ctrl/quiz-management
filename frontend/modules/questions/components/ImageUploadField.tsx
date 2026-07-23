@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useCallback } from "react";
 import Image from "next/image";
-import { uploadImageRequest } from "@/modules/quiz/actions";
+import { uploadImageRequest } from "@/modules/admin/actions";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

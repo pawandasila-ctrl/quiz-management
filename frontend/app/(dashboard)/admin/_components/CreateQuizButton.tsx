@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useAdminCategories } from "@/modules/quiz/hooks";
+import { useAdminCategories } from "@/modules/admin/hooks";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import CreateQuizModal from "@/modules/quiz/components/CreateQuizModal";

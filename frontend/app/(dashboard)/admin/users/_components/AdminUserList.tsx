@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useAdminUsers } from "@/modules/quiz/hooks";
+import { useAdminUsers } from "@/modules/admin/hooks";
 import { Skeleton } from "@/components/ui/skeleton";
 import UserTable from "@/modules/admin/components/UserTable";
 

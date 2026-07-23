@@ -1,10 +1,8 @@
 "use client";
 
 import React from "react";
-import {
-  useAdminQuizDetails,
-  useQuizAttemptResult,
-} from "@/modules/quiz/hooks";
+import { useAdminQuizDetails } from "@/modules/admin/hooks";
+import { useQuizAttemptResult } from "@/modules/quiz/hooks";
 import { Answer } from "@/modules/quiz/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, AlertCircle } from "lucide-react";

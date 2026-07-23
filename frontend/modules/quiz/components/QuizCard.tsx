@@ -10,7 +10,7 @@ import {
   useReopenQuiz,
   useReleaseResults,
   useDeleteQuiz,
-} from "../hooks";
+} from "@/modules/admin/hooks";
 import { Quiz, QuizStatus } from "../types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -139,7 +139,10 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
           <div className="mt-2.5 flex items-center justify-between gap-2 text-[11px] text-muted-foreground pt-2 border-t border-border/40">
             {quiz.creator && (
               <span className="truncate">
-                Created by: <span className="font-medium text-foreground">{quiz.creator.name}</span>
+                Created by:{" "}
+                <span className="font-medium text-foreground">
+                  {quiz.creator.name}
+                </span>
               </span>
             )}
             {quiz.created_at && (
@@ -195,7 +198,7 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
       <div className="flex flex-wrap items-center gap-2 px-5 pb-4 pt-3 border-t border-border/60 mt-auto w-full">
         <Link
           href={`/admin/quiz/${quiz.id}`}
-          className="flex-1 min-w-[120px] inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground shadow-sm hover:bg-accent transition-colors"
+          className="flex-1 min-w-30 inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground shadow-sm hover:bg-accent transition-colors"
         >
           <Settings className="h-3.5 w-3.5 shrink-0" />
           <span>Edit Builder</span>
@@ -204,7 +207,7 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
         {quiz.status !== "draft" && (
           <Link
             href={`/admin/quiz/${quiz.id}/submissions`}
-            className="flex-1 min-w-[120px] inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground shadow-sm hover:bg-accent transition-colors"
+            className="flex-1 min-w-30 inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground shadow-sm hover:bg-accent transition-colors"
           >
             <Users className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
             <span>Submissions</span>
@@ -216,7 +219,7 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
             size="sm"
             onClick={handlePublish}
             disabled={publishMutation.isPending}
-            className="flex-1 min-w-[120px] h-8 gap-1.5 text-xs bg-green-600 hover:bg-green-700 text-white justify-center"
+            className="flex-1 min-w-30 h-8 gap-1.5 text-xs bg-green-600 hover:bg-green-700 text-white justify-center"
           >
             {publishMutation.isPending ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
@@ -235,7 +238,7 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
             variant="destructive"
             onClick={handleClose}
             disabled={closeMutation.isPending}
-            className="flex-1 min-w-[120px] h-8 gap-1.5 text-xs justify-center"
+            className="flex-1 min-w-30 h-8 gap-1.5 text-xs justify-center"
           >
             {closeMutation.isPending ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
@@ -251,7 +254,7 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
             size="sm"
             onClick={handleReopen}
             disabled={reopenMutation.isPending}
-            className="flex-1 min-w-[120px] h-8 gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white justify-center font-medium"
+            className="flex-1 min-w-30 h-8 gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white justify-center font-medium"
           >
             {reopenMutation.isPending ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
@@ -270,7 +273,7 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
             variant="outline"
             onClick={handleRelease}
             disabled={releaseResultsMutation.isPending}
-            className="flex-1 min-w-[120px] h-8 gap-1.5 text-xs border-border hover:bg-accent justify-center"
+            className="flex-1 min-w-30 h-8 gap-1.5 text-xs border-border hover:bg-accent justify-center"
           >
             {releaseResultsMutation.isPending ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
@@ -305,7 +308,7 @@ export const QuizCard = React.memo(function QuizCard({ quiz }: QuizCardProps) {
               <Button
                 size="sm"
                 variant="outline"
-                className="flex-1 min-w-[120px] h-8 gap-1.5 text-xs border-border text-muted-foreground hover:text-destructive hover:bg-destructive/10 justify-center"
+                className="flex-1 min-w-30 h-8 gap-1.5 text-xs border-border text-muted-foreground hover:text-destructive hover:bg-destructive/10 justify-center"
               >
                 <Trash2 className="h-3.5 w-3.5 shrink-0" />
                 <span>Delete Quiz</span>

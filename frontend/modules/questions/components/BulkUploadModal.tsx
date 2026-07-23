@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useState, useRef } from "react";
-import { useBulkUploadQuestions } from "@/modules/quiz/hooks";
+import { useBulkUploadQuestions } from "@/modules/admin/hooks";
 import { QuestionType } from "@/modules/quiz/types";
 import {
   Dialog,

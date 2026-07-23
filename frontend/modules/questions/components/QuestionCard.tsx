@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useState } from "react";
-import { useDeleteQuestion } from "@/modules/quiz/hooks";
+import { useDeleteQuestion } from "@/modules/admin/hooks";
 import { Question } from "@/modules/quiz/types";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

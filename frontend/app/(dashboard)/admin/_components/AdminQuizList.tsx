@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useAdminQuizzes, useAdminCategories } from "@/modules/quiz/hooks";
+import { useAdminQuizzes, useAdminCategories } from "@/modules/admin/hooks";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   Loader2,

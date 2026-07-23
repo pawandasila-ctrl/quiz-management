@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useAdminCategories, useDeleteCategory } from "@/modules/quiz/hooks";
+import { useAdminCategories, useDeleteCategory } from "@/modules/admin/hooks";
 import { FolderOpen, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

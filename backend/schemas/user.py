@@ -18,6 +18,9 @@ class UserUpdate(BaseModel):
 class UserAdminUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=255, description="User full name")
     email: Optional[EmailStr] = Field(None, description="User email address")
+    role: Optional[UserRole] = Field(None, description="User role (admin/student/instructor)")
+    image: Optional[str] = Field(None, max_length=1024, description="URL to profile picture")
+    is_active: Optional[bool] = Field(None, description="Account enabled/disabled status")
 
 class UserLogin(BaseModel):
     email: EmailStr = Field(..., json_schema_extra={"example": "johndoe@example.com"}, description="User email address")

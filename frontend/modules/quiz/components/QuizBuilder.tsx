@@ -7,7 +7,7 @@ import {
   usePublishQuiz,
   useCloseQuiz,
   useReopenQuiz,
-} from "../hooks";
+} from "@/modules/admin/hooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -134,7 +134,7 @@ export default function QuizBuilder({ quizId }: QuizBuilderProps) {
             Quiz Management
           </Link>
           <span className="text-muted-foreground/40">/</span>
-          <span className="text-sm font-medium text-foreground truncate max-w-[200px]">
+          <span className="text-sm font-medium text-foreground truncate max-w-50">
             {quiz.title}
           </span>
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useState } from "react";
-import { useCreateQuiz } from "../hooks";
+import { useCreateQuiz } from "@/modules/admin/hooks";
 import { Category } from "../types";
 import {
   Dialog,
