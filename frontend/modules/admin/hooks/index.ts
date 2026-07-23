@@ -42,7 +42,7 @@ export function useAdminQuizzes(
   return useQuery<PaginatedResponse<Quiz>, Error>({
     queryKey: ["admin-quizzes", params],
     queryFn: () => getAdminQuizzesRequest(params),
-    initialData: options?.initialData,
+    initialData: options?.initialData ? () => options.initialData : undefined,
   });
 }
 
@@ -66,7 +66,7 @@ export function useAdminCategories(options?: { initialData?: Category[] }) {
   return useQuery<Category[], Error>({
     queryKey: ["admin-categories"],
     queryFn: getAdminCategoriesRequest,
-    initialData: options?.initialData,
+    initialData: options?.initialData ? () => options.initialData : undefined,
   });
 }
 
@@ -77,7 +77,7 @@ export function useAdminUsers(
   return useQuery<PaginatedResponse<User>, Error>({
     queryKey: ["admin-users", params],
     queryFn: () => getAdminUsersRequest(params),
-    initialData: options?.initialData,
+    initialData: options?.initialData ? () => options.initialData : undefined,
   });
 }
 

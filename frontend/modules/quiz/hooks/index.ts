@@ -21,7 +21,7 @@ export function useStudentQuizzes(
   return useQuery<PaginatedResponse<Quiz>, Error>({
     queryKey: ["student-quizzes", params],
     queryFn: () => getStudentQuizzesRequest(params),
-    initialData: options?.initialData,
+    initialData: options?.initialData ? () => options.initialData : undefined,
   });
 }
 
@@ -29,7 +29,7 @@ export function useStudentAttempts(options?: { initialData?: QuizAttempt[] }) {
   return useQuery<QuizAttempt[], Error>({
     queryKey: ["student-attempts"],
     queryFn: getStudentAttemptsRequest,
-    initialData: options?.initialData,
+    initialData: options?.initialData ? () => options.initialData : undefined,
   });
 }
 
@@ -46,7 +46,7 @@ export function useStudentQuizDetails(quizId: number, options?: { initialData?: 
     queryKey: ["student-quiz-details", quizId],
     queryFn: () => getStudentQuizDetailsRequest(quizId),
     enabled: !isNaN(quizId),
-    initialData: options?.initialData,
+    initialData: options?.initialData ? () => options.initialData : undefined,
   });
 }
 

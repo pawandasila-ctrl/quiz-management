@@ -10,6 +10,8 @@ from datetime import datetime, timedelta, timezone
 import secrets
 from sqlalchemy import func, or_
 import math
+from sqlalchemy import delete
+
 
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
     """Query a user by their email address."""
@@ -164,17 +166,13 @@ async def update_user_role(db: AsyncSession, user_id: int, role: UserRole) -> Us
 
 async def toggle_user_block(db: AsyncSession, user_id: int) -> User:
     """Toggle is_active flag — treated as is_blocked in the admin UI."""
-    from sqlalchemy import delete
     query = select(User).filter(User.id == user_id)
     result = await db.execute(query)
     user = result.scalars().first()
     if not user:
         raise UserNotFoundError("User not found.")
-
     user.is_active = not user.is_active
-
     if not user.is_active:
-        # Immediately invalidate all active sessions for blocked user
         await db.execute(delete(Session).filter(Session.user_id == user_id))
 
     db.add(user)
