@@ -237,9 +237,21 @@ export function useDeleteAttempt(quizId: number) {
 
 export function useUpdateUserRole() {
   const queryClient = useQueryClient();
-  return useMutation<void, Error, { userId: number; role: UserRole }>({
+  return useMutation<User, Error, { userId: number; role: UserRole }>({
     mutationFn: ({ userId, role }) => updateUserRoleRequest(userId, role),
-    onSuccess: () => {
+    onSuccess: (updatedUser) => {
+      queryClient.setQueriesData<PaginatedResponse<User>>(
+        { queryKey: ["admin-users"] },
+        (old) => {
+          if (!old || !old.items) return old;
+          return {
+            ...old,
+            items: old.items.map((u) =>
+              u.id === updatedUser.id ? { ...u, role: updatedUser.role } : u
+            ),
+          };
+        }
+      );
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
   });
@@ -249,7 +261,19 @@ export function useToggleUserBlock() {
   const queryClient = useQueryClient();
   return useMutation<User, Error, number>({
     mutationFn: (userId: number) => toggleUserBlockRequest(userId),
-    onSuccess: () => {
+    onSuccess: (updatedUser) => {
+      queryClient.setQueriesData<PaginatedResponse<User>>(
+        { queryKey: ["admin-users"] },
+        (old) => {
+          if (!old || !old.items) return old;
+          return {
+            ...old,
+            items: old.items.map((u) =>
+              u.id === updatedUser.id ? { ...u, is_active: updatedUser.is_active } : u
+            ),
+          };
+        }
+      );
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
   });
@@ -259,7 +283,19 @@ export function useUpdateUser() {
   const queryClient = useQueryClient();
   return useMutation<User, Error, { userId: number; payload: UpdateUserPayload }>({
     mutationFn: ({ userId, payload }) => updateUserRequest(userId, payload),
-    onSuccess: () => {
+    onSuccess: (updatedUser) => {
+      queryClient.setQueriesData<PaginatedResponse<User>>(
+        { queryKey: ["admin-users"] },
+        (old) => {
+          if (!old || !old.items) return old;
+          return {
+            ...old,
+            items: old.items.map((u) =>
+              u.id === updatedUser.id ? { ...u, ...updatedUser } : u
+            ),
+          };
+        }
+      );
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
   });
@@ -269,7 +305,18 @@ export function useDeleteUser() {
   const queryClient = useQueryClient();
   return useMutation<void, Error, number>({
     mutationFn: (userId: number) => deleteUserRequest(userId),
-    onSuccess: () => {
+    onSuccess: (_, userId) => {
+      queryClient.setQueriesData<PaginatedResponse<User>>(
+        { queryKey: ["admin-users"] },
+        (old) => {
+          if (!old || !old.items) return old;
+          return {
+            ...old,
+            total: Math.max(0, old.total - 1),
+            items: old.items.filter((u) => u.id !== userId),
+          };
+        }
+      );
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
   });

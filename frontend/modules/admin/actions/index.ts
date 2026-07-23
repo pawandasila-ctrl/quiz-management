@@ -128,8 +128,9 @@ export async function getAdminUsersRequest(
 export async function updateUserRoleRequest(
   userId: number,
   role: UserRole,
-): Promise<void> {
-  await axiosClient.put(`/admin/users/${userId}/role?role=${role}`);
+): Promise<User> {
+  const res = await axiosClient.put<User>(`/admin/users/${userId}/role?role=${role}`);
+  return res.data;
 }
 
 export async function updateUserRequest(
