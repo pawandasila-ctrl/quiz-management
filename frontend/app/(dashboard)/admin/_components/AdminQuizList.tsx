@@ -44,10 +44,8 @@ export default function AdminQuizList({ initialQuizzes }: AdminQuizListProps) {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [page, setPage] = useState<number>(1);
 
-  // Debounce search input (300ms) for high UI responsiveness
   const debouncedSearch = useDebounce(searchTerm, 300);
 
-  // Event handlers to update filter state and reset page to 1
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     setPage(1);
@@ -212,7 +210,8 @@ export default function AdminQuizList({ initialQuizzes }: AdminQuizListProps) {
             <strong className="text-foreground">
               {isLoading || isFetching ? "..." : quizzes.length}
             </strong>{" "}
-            of <strong className="text-foreground">{total}</strong> total quizzes
+            of <strong className="text-foreground">{total}</strong> total
+            quizzes
           </span>
           {hasActiveFilters && (
             <Badge
