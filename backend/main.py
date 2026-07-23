@@ -86,6 +86,10 @@ from fastapi.responses import Response as FastAPIResponse
 async def etag_middleware(request: Request, call_next):
     response = await call_next(request)
     if request.method == "GET" and response.status_code == 200:
+        cache_control = response.headers.get("cache-control", "")
+        if "no-store" in cache_control:
+            return response
+
         body = b"".join([chunk async for chunk in response.body_iterator])
         etag = f'"{hashlib.md5(body).hexdigest()}"'
         

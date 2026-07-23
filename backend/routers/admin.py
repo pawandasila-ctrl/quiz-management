@@ -267,7 +267,7 @@ async def list_users(
     data = await user_controller.get_all_users(
         db, search=search, role=role, is_active=is_active, page=page, limit=limit
     )
-    response.headers["Cache-Control"] = "private, max-age=30"
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
     return data
 
 @router.put("/users/{id}/role", response_model=UserResponse)
