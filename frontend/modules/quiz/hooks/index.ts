@@ -16,6 +16,9 @@ import {
   createQuizRequest,
   createCategoryRequest,
   updateUserRoleRequest,
+  updateUserRequest,
+  toggleUserBlockRequest,
+  deleteUserRequest,
   publishQuizRequest,
   closeQuizRequest,
   reopenQuizRequest,
@@ -31,6 +34,7 @@ import {
   CreateQuizPayload,
   CreateCategoryPayload,
   CreateQuestionPayload,
+  UpdateUserPayload,
 } from "@/modules/quiz/actions";
 import { Quiz, Category, QuizAttempt, LeaderboardEntry, AnswerState, PaginatedResponse, QuizFilterParams } from "../types";
 import { User, UserRole } from "../../auth/types";
@@ -201,6 +205,36 @@ export function useUpdateUserRole() {
   const queryClient = useQueryClient();
   return useMutation<void, Error, { userId: number; role: UserRole }>({
     mutationFn: ({ userId, role }) => updateUserRoleRequest(userId, role),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+  });
+}
+
+export function useToggleUserBlock() {
+  const queryClient = useQueryClient();
+  return useMutation<User, Error, number>({
+    mutationFn: (userId: number) => toggleUserBlockRequest(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+  });
+}
+
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+  return useMutation<User, Error, { userId: number; payload: UpdateUserPayload }>({
+    mutationFn: ({ userId, payload }) => updateUserRequest(userId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+  });
+}
+
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, number>({
+    mutationFn: (userId: number) => deleteUserRequest(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },

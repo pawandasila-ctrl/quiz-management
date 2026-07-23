@@ -15,9 +15,9 @@ class UserUpdate(BaseModel):
     password: Optional[str] = Field(None, min_length=8, max_length=100, description="User password")
     image: Optional[str] = Field(None, max_length=1024, description="URL to profile picture")
 
-class UserAdminUpdate(UserUpdate):
-    role: Optional[UserRole] = Field(None, description="User role (admin/student/instructor)")
-    is_active: Optional[bool] = Field(None, description="Account enabled/disabled status")
+class UserAdminUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255, description="User full name")
+    email: Optional[EmailStr] = Field(None, description="User email address")
 
 class UserLogin(BaseModel):
     email: EmailStr = Field(..., json_schema_extra={"example": "johndoe@example.com"}, description="User email address")
@@ -35,6 +35,9 @@ class UserResponse(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+class UserEnrichedResponse(UserResponse):
+    last_login_at: Optional[datetime] = None
 
 class UserLoginResponse(BaseModel):
     access_token: str

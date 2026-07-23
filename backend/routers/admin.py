@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from config.database import DbSession
 from config.security import require_role
 from models.user import UserRole, User
-from schemas.user import UserResponse
+from schemas.user import UserResponse, UserEnrichedResponse, UserAdminUpdate
 from schemas.quiz import (
     CategoryCreate, CategoryResponse, QuizCreate, QuizUpdate, QuizResponse,
     QuizFullResponse, QuestionCreate, QuestionResponse, OptionCreate, OptionResponse,
@@ -253,14 +253,21 @@ async def get_quiz_leaderboard(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
 # ── User Management ──────────────────────────────────────────────────────────
-@router.get("/users", response_model=List[UserResponse])
+@router.get("/users", response_model=List[UserEnrichedResponse])
 async def list_users(
     db: DbSession,
     limit: int = Query(50, ge=1, le=200, description="Max results to return"),
     offset: int = Query(0, ge=0, description="Number of results to skip"),
     current_user: User = Depends(require_role([UserRole.ADMIN]))
 ):
-    return await user_controller.get_all_users(db, limit=limit, offset=offset)
+    enriched = await user_controller.get_all_users(db, limit=limit, offset=offset)
+    result = []
+    for item in enriched:
+        u = item["user"]
+        data = UserEnrichedResponse.model_validate(u)
+        data.last_login_at = item["last_login_at"]
+        result.append(data)
+    return result
 
 @router.put("/users/{id}/role", response_model=UserResponse)
 async def promote_user(
@@ -271,5 +278,40 @@ async def promote_user(
 ):
     try:
         return await user_controller.update_user_role(db, id, role)
+    except PracticeException as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
+
+@router.patch("/users/{id}/block", response_model=UserResponse)
+async def toggle_user_block(
+    id: int,
+    db: DbSession,
+    current_user: User = Depends(require_role([UserRole.ADMIN]))
+):
+    try:
+        return await user_controller.toggle_user_block(db, id)
+    except PracticeException as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
+
+@router.patch("/users/{id}", response_model=UserResponse)
+async def update_user(
+    id: int,
+    data: UserAdminUpdate,
+    db: DbSession,
+    current_user: User = Depends(require_role([UserRole.ADMIN]))
+):
+    try:
+        return await user_controller.update_user(db, id, data)
+    except PracticeException as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
+
+@router.delete("/users/{id}", status_code=status.HTTP_200_OK)
+async def delete_user(
+    id: int,
+    db: DbSession,
+    current_user: User = Depends(require_role([UserRole.ADMIN]))
+):
+    try:
+        await user_controller.delete_user(db, id)
+        return {"detail": "User successfully deleted."}
     except PracticeException as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)

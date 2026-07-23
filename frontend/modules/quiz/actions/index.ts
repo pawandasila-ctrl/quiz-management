@@ -164,6 +164,28 @@ export async function updateUserRoleRequest(
   await axiosClient.put(`/admin/users/${userId}/role?role=${role}`);
 }
 
+export interface UpdateUserPayload {
+  name?: string;
+  email?: string;
+}
+
+export async function updateUserRequest(
+  userId: number,
+  payload: UpdateUserPayload,
+): Promise<User> {
+  const res = await axiosClient.patch<User>(`/admin/users/${userId}`, payload);
+  return res.data;
+}
+
+export async function toggleUserBlockRequest(userId: number): Promise<User> {
+  const res = await axiosClient.patch<User>(`/admin/users/${userId}/block`);
+  return res.data;
+}
+
+export async function deleteUserRequest(userId: number): Promise<void> {
+  await axiosClient.delete(`/admin/users/${userId}`);
+}
+
 export async function publishQuizRequest(quizId: number): Promise<void> {
   await axiosClient.post(`/admin/quiz/${quizId}/publish`);
 }
