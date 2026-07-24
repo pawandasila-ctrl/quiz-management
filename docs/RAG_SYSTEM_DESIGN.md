@@ -22,38 +22,51 @@ This document outlines the complete architectural design, data pipelines, valida
 
 ## 🏗️ 2. System Architecture Overview
 
-```mermaid
-flowchart TD
-    subgraph Ingestion ["1. Multimodal File Ingestion"]
-        A["Admin Uploads File"] --> B{"Detect File Type"}
-        B -->|"PDF / Word / PPT"| C["PyMuPDF / python-docx / python-pptx"]
-        B -->|"Audio / Video"| D["Gemini 1.5 Flash Audio/Video API"]
-        B -->|"Images"| E["Gemini 1.5 Flash Vision OCR"]
-    end
-
-    subgraph Processing ["2. Chunking & Retrieval"]
-        C & D & E --> F["Recursive Text Chunking (~500 Tokens)"]
-        F --> G["Generate 768-dim Embeddings via text-embedding-004"]
-        G --> H[("PostgreSQL + pgvector Store")]
-    end
-
-    subgraph Generation ["3. Enforced Structured Generation"]
-        H --> I["Gemini 1.5 Flash + Pydantic JSON Schema"]
-        I --> J["Generated Draft Questions"]
-    end
-
-    subgraph Verification ["4. Anti-Hallucination & Revalidation"]
-        J --> K["Step A: Deterministic Rule Checks"]
-        K --> L["Step B: String Grounding Quote Check"]
-        L --> M["Step C: Solve-and-Compare Adversarial Test"]
-        M -->|"Passed"| N["Approved Questions"]
-        M -->|"Failed"| O["Flagged with Correction Reason"]
-    end
-
-    subgraph Frontend ["5. Next.js Admin Review"]
-        N & O --> P["Interactive Question Review Drawer"]
-        P --> Q["Bulk Import to Quiz Builder DB"]
-    end
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      1. MULTIMODAL FILE INGESTION                       │
+├─────────────────────────────────────────────────────────────────────────┤
+│ • PDF / Word / PPT  ──► PyMuPDF / python-docx / python-pptx            │
+│ • Audio / Video     ──► Gemini 1.5 Flash Audio/Video API                │
+│ • Images            ──► Gemini 1.5 Flash Vision OCR                     │
+└────────────────────────────────────┬────────────────────────────────────┘
+                                     │ Extracted Clean Text
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     2. CHUNKING & RETRIEVAL (RAG)                       │
+├─────────────────────────────────────────────────────────────────────────┤
+│ • Text Splitter     ──► Recursive Chunking (~500 Tokens)                │
+│ • Embeddings        ──► text-embedding-004 (768 dimensions)            │
+│ • Storage           ──► PostgreSQL + pgvector Storage                   │
+└────────────────────────────────────┬────────────────────────────────────┘
+                                     │ Context Chunks
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    3. ENFORCED STRUCTURED GENERATION                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│ • Model             ──► Gemini 1.5 Flash + Pydantic JSON Schema         │
+│ • Output            ──► Draft Questions, 4 Options, Answers             │
+└────────────────────────────────────┬────────────────────────────────────┘
+                                     │ Draft Questions
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                 4. ANTI-HALLUCINATION & REVALIDATION                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│ • Step A: Deterministic Rule Checks (Single answer, no duplicates)      │
+│ • Step B: String Grounding Quote Check (Word-for-word quote in doc)     │
+│ • Step C: Solve-and-Compare Adversarial Test (Independent LLM solver)   │
+└───────────────────┬─────────────────────────────────┬───────────────────┘
+                    │                                 │
+            [ ✅ Approved ]                   [ 🚩 Flagged ]
+                    │                                 │
+                    └────────────────┬────────────────┘
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      5. NEXT.JS ADMIN REVIEW UX                         │
+├─────────────────────────────────────────────────────────────────────────┤
+│ • Interactive Drawer: Edit questions, review flags, delete bad items     │
+│ • Action: Single-click Bulk Import to Quiz Builder Database             │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
