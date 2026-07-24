@@ -44,7 +44,16 @@ import {
   Award,
   ListChecks,
   Repeat,
+  LayoutGrid,
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { toast } from "sonner";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ImageLightbox from "@/components/ImageLightbox";
@@ -270,8 +279,11 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
     );
   }, [currentQuestion, answerMap, syncAnswer]);
 
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
   const handleJump = useCallback((index: number) => {
     setCurrentQuestionIndex(index);
+    setIsMobileNavOpen(false);
   }, []);
 
   const handlePrev = useCallback(() => {
@@ -770,8 +782,9 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
 
   return (
     <PageShell>
-      <div className="mx-auto max-w-6xl space-y-5 select-none">
-        <div className="sticky top-4 z-30 flex flex-col gap-3 rounded-xl bg-slate-900 p-4 text-white shadow-sm sm:flex-row sm:items-center sm:justify-between dark:bg-slate-950">
+      <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5 select-none">
+        {/* Desktop Header (>= lg) */}
+        <div className="hidden lg:flex sticky top-4 z-30 flex-col gap-3 rounded-xl bg-slate-900 p-4 text-white shadow-sm sm:flex-row sm:items-center sm:justify-between dark:bg-slate-950">
           <div>
             <h2 className="font-bold text-lg">{quiz.title}</h2>
             <span className="text-xs text-slate-300">
@@ -810,15 +823,112 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
           </div>
         </div>
 
-        {/* Main split: question pane + navigator sidebar */}
-        <div className="flex flex-col-reverse gap-5 lg:flex-row items-start">
-          <div className="flex-1 w-full">
+        {/* Mobile Header (< lg) - Sleek, Compact Sticky Navbar */}
+        <div className="sticky top-2 z-30 flex items-center justify-between gap-2 rounded-xl bg-slate-900 px-3.5 py-2.5 text-white shadow-md lg:hidden dark:bg-slate-950">
+          <div className="min-w-0 flex-1">
+            <h2 className="font-bold text-sm truncate leading-tight">
+              {quiz.title}
+            </h2>
+            <span className="text-[11px] text-slate-300 font-medium">
+              Question {currentQuestionIndex + 1} / {questions.length}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {timeLeft !== null && (
+              <div className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-1 text-xs font-mono font-semibold">
+                <Clock className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                <span>{formatTime(timeLeft)}</span>
+              </div>
+            )}
+
+            {/* Mobile Question Palette Sheet Trigger */}
+            <Sheet open={isMobileNavOpen} onOpenChange={setIsMobileNavOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 gap-1 px-2 text-xs bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg"
+                  title="Open Question Palette"
+                >
+                  <LayoutGrid className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                  <span className="font-mono">
+                    {answeredCount}/{questions.length}
+                  </span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent
+                side="right"
+                className="w-[85%] sm:max-w-md p-0 flex flex-col h-full bg-background"
+              >
+                <SheetHeader className="p-4 border-b border-border bg-muted/30">
+                  <SheetTitle className="text-base font-bold flex items-center gap-2">
+                    <LayoutGrid className="h-4.5 w-4.5 text-primary" />
+                    Question Palette
+                  </SheetTitle>
+                  <SheetDescription className="text-xs">
+                    Tap any question number to jump directly to it.
+                  </SheetDescription>
+                </SheetHeader>
+
+                <div className="p-4 flex-1 overflow-y-auto space-y-4">
+                  {/* Legend and Overview Statistics */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-medium">
+                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0" />
+                      <span>Answered: {answeredCount}</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-2 rounded-lg bg-rose-500/10 text-rose-700 dark:text-rose-300 font-medium">
+                      <span className="h-2.5 w-2.5 rounded-full bg-rose-500 shrink-0" />
+                      <span>Unanswered: {statusCounts.not_answered}</span>
+                    </div>
+                  </div>
+
+                  <QuestionNavigator
+                    total={questions.length}
+                    currentIndex={currentQuestionIndex}
+                    answerMap={answerMap}
+                    questionIds={questionIds}
+                    onJump={handleJump}
+                  />
+                </div>
+
+                <div className="p-4 border-t border-border bg-card">
+                  <Button
+                    variant="default"
+                    className="w-full font-semibold h-9"
+                    onClick={() => {
+                      setIsMobileNavOpen(false);
+                      setShowSubmitConfirm(true);
+                    }}
+                  >
+                    Submit Quiz Attempt
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowSubmitConfirm(true)}
+              disabled={finalizeQuizMutation.isPending || isSubmittingManual}
+              className="font-semibold shadow-sm h-8 px-2.5 text-xs"
+            >
+              Submit
+            </Button>
+          </div>
+        </div>
+
+        {/* Main split: question pane (100% on mobile) + navigator sidebar (desktop only) */}
+        <div className="flex flex-col lg:flex-row items-start gap-5">
+          <div className="flex-1 w-full min-w-0">
             <Card className="border-border shadow-sm relative overflow-hidden">
-              <CardHeader className="p-6 pb-5">
-                <div className="flex items-center justify-between mb-3">
+              <CardHeader className="p-4 sm:p-6 pb-4">
+                <div className="flex items-center justify-between mb-2 sm:mb-3">
                   <Badge
                     variant="outline"
-                    className="text-xs border-border bg-accent/10"
+                    className="text-xs border-border bg-accent/10 font-semibold"
                   >
                     Question {currentQuestion.order || currentQuestionIndex + 1}
                   </Badge>
@@ -827,21 +937,21 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
                     {currentQuestion.marks === 1 ? "Mark" : "Marks"}
                   </span>
                 </div>
-                <CardTitle className="text-xl font-semibold tracking-tight text-foreground leading-relaxed">
+                <CardTitle className="text-lg sm:text-xl font-semibold tracking-tight text-foreground leading-relaxed">
                   {currentQuestion.text}
                 </CardTitle>
                 {currentQuestion.image_url && (
                   <ImageLightbox
                     src={currentQuestion.image_url}
                     alt="Question illustration"
-                    containerClassName="mt-5 rounded-lg overflow-hidden border border-border w-full relative bg-muted flex justify-center"
+                    containerClassName="mt-4 rounded-lg overflow-hidden border border-border w-full relative bg-muted flex justify-center"
                     imageClassName="object-contain"
-                    thumbHeight="h-64"
+                    thumbHeight="h-48 sm:h-64"
                   />
                 )}
               </CardHeader>
 
-              <CardContent className="space-y-3.5 px-6 pt-6 pb-20 border-t border-border">
+              <CardContent className="space-y-3 p-4 sm:p-6 pt-4 pb-20 border-t border-border">
                 {currentQuestion.options.map((opt) => {
                   const isSelected =
                     currentAnswerState?.selectedOptionId === opt.id;
@@ -851,22 +961,22 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
                       onClick={() =>
                         handleSelectOption(currentQuestion.id, opt.id)
                       }
-                      className={`w-full text-left p-4.5 rounded-lg border text-sm font-medium transition-all flex items-center justify-between ${
+                      className={`w-full text-left p-3.5 sm:p-4.5 rounded-xl border text-sm font-medium transition-all flex items-center justify-between gap-3 min-h-12.5 ${
                         isSelected
-                          ? "border-primary bg-primary/5 text-primary shadow-sm"
-                          : "border-border hover:border-primary/40 hover:bg-muted text-foreground"
+                          ? "border-primary bg-primary/5 text-primary shadow-xs ring-1 ring-primary/30"
+                          : "border-border hover:border-primary/40 hover:bg-muted/40 text-foreground"
                       }`}
                     >
-                      <span>{opt.text}</span>
+                      <span className="leading-snug flex-1">{opt.text}</span>
                       <div
-                        className={`h-4 w-4 shrink-0 rounded-full border flex items-center justify-center ${
+                        className={`h-4.5 w-4.5 shrink-0 rounded-full border flex items-center justify-center transition-colors ${
                           isSelected
-                            ? "border-primary"
+                            ? "border-primary bg-primary/10"
                             : "border-muted-foreground/30"
                         }`}
                       >
                         {isSelected && (
-                          <div className="h-2 w-2 rounded-full bg-primary" />
+                          <div className="h-2.5 w-2.5 rounded-full bg-primary" />
                         )}
                       </div>
                     </button>
@@ -874,7 +984,7 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
                 })}
               </CardContent>
 
-              <CardFooter className="sticky bottom-0 z-20 bg-card border-t border-border p-6 flex flex-col gap-4 shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
+              <CardFooter className="sticky bottom-0 z-20 bg-card border-t border-border p-4 sm:p-6 flex flex-col gap-3 shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground self-start">
                   {isSaving && (
                     <span className="flex items-center gap-1">
@@ -889,38 +999,38 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
                   )}
                 </div>
 
-                <div className="flex w-full flex-wrap items-center justify-between gap-3">
-                  <div className="flex gap-2">
+                <div className="flex w-full flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleClearAnswer}
-                      className="gap-1.5 text-xs border-border hover:bg-accent h-9"
+                      className="flex-1 sm:flex-initial gap-1.5 text-xs border-border hover:bg-accent h-9 px-3"
                     >
-                      <Eraser className="h-3.5 w-3.5" /> Clear Answer
+                      <Eraser className="h-3.5 w-3.5" /> Clear
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={handleMarkForReview}
-                      className={`gap-1.5 text-xs border-border hover:bg-accent h-9 ${
+                      className={`flex-1 sm:flex-initial gap-1.5 text-xs border-border hover:bg-accent h-9 px-3 ${
                         isMarked
-                          ? "bg-violet-50 text-violet-700 border-violet-200"
+                          ? "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800"
                           : ""
                       }`}
                     >
                       <Bookmark className="h-3.5 w-3.5" />
-                      {isMarked ? "Unmark Review" : "Mark for Review"}
+                      {isMarked ? "Unmark" : "Mark Review"}
                     </Button>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       disabled={currentQuestionIndex === 0}
                       onClick={handlePrev}
-                      className="gap-1 text-xs border-border hover:bg-accent h-9"
+                      className="flex-1 sm:flex-initial gap-1 text-xs border-border hover:bg-accent h-9 px-3"
                     >
                       <ChevronLeft className="h-3.5 w-3.5" /> Previous
                     </Button>
@@ -932,16 +1042,16 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
                         disabled={
                           finalizeQuizMutation.isPending || isSubmittingManual
                         }
-                        className="text-xs font-semibold h-9"
+                        className="flex-1 sm:flex-initial text-xs font-semibold h-9 px-4"
                       >
                         Finish Quiz
                       </Button>
                     ) : (
                       <Button
-                        variant="outline"
+                        variant="default"
                         size="sm"
                         onClick={handleNext}
-                        className="gap-1 text-xs border-border hover:bg-accent h-9"
+                        className="flex-1 sm:flex-initial gap-1 text-xs font-semibold h-9 px-4"
                       >
                         Save &amp; Next <ChevronRight className="h-3.5 w-3.5" />
                       </Button>
@@ -952,7 +1062,8 @@ export default function QuizSession({ quizId }: QuizSessionProps) {
             </Card>
           </div>
 
-          <Card className="lg:sticky lg:top-28 border-border shadow-sm p-4 lg:w-80 lg:shrink-0 h-fit">
+          {/* Desktop Right Sidebar Navigator (lg+ only) */}
+          <Card className="hidden lg:block lg:sticky lg:top-28 border-border shadow-sm p-4 lg:w-80 lg:shrink-0 h-fit">
             <QuestionNavigator
               total={questions.length}
               currentIndex={currentQuestionIndex}
