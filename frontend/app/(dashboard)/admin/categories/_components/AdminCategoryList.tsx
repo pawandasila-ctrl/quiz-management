@@ -59,8 +59,12 @@ export default function AdminCategoryList({
     return (
       <div className="text-center py-16 text-muted-foreground text-sm border border-dashed border-border rounded-2xl bg-muted/20">
         <FolderOpen className="h-10 w-10 mx-auto mb-3 opacity-30 text-primary" />
-        <p className="font-semibold text-foreground">No categories defined yet.</p>
-        <p className="mt-1 text-xs">Create a category to group and organize your quizzes.</p>
+        <p className="font-semibold text-foreground">
+          No categories defined yet.
+        </p>
+        <p className="mt-1 text-xs">
+          Create a category to group and organize your quizzes.
+        </p>
       </div>
     );
   }
@@ -68,14 +72,20 @@ export default function AdminCategoryList({
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {categories.map((cat) => (
-        <Card key={cat.id} className="group border-border/80 rounded-2xl shadow-xs hover:shadow-md hover:border-primary/40 transition-all duration-200 bg-card">
+        <Card
+          key={cat.id}
+          className="group border-border/80 rounded-2xl shadow-xs hover:shadow-md hover:border-primary/40 transition-all duration-200 bg-card"
+        >
           <CardHeader className="p-5 pb-3">
             <div className="flex items-center justify-between gap-2">
               <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
                 {cat.name}
               </CardTitle>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-[11px] font-mono border-primary/20 bg-primary/5 text-primary">
+                <Badge
+                  variant="outline"
+                  className="text-[11px] font-mono border-primary/20 bg-primary/5 text-primary"
+                >
                   ID #{cat.id}
                 </Badge>
                 {isAdmin && (

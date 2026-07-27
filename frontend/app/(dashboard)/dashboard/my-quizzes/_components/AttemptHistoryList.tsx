@@ -92,20 +92,51 @@ export default function AttemptHistoryList({
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {Array.from({ length: 4 }).map((_, i) => (
+      <div className="space-y-6 animate-pulse">
+        {Array.from({ length: 3 }).map((_, groupIdx) => (
           <div
-            key={i}
-            className="rounded-xl border border-border p-5 space-y-3 bg-card animate-pulse"
+            key={groupIdx}
+            className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xs space-y-0"
           >
-            <div className="flex items-center justify-between">
-              <Skeleton className="h-5 w-40 rounded-md" />
-              <Skeleton className="h-4 w-20 rounded-md" />
+            {/* Group Header Skeleton */}
+            <div className="flex items-center justify-between border-b border-border/60 bg-muted/30 px-5 py-3.5">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-5 w-44 rounded-md" />
+                <Skeleton className="h-4 w-20 rounded-full" />
+              </div>
+              <Skeleton className="h-4 w-24 rounded-full" />
             </div>
-            <Skeleton className="h-4 w-3/4 rounded-md" />
-            <div className="flex items-center justify-between pt-2 border-t border-border/40">
-              <Skeleton className="h-3 w-32 rounded-md" />
-              <Skeleton className="h-7 w-24 rounded-md" />
+
+            {/* Attempt Rows Skeleton */}
+            <div className="divide-y divide-border/60">
+              {Array.from({ length: 2 }).map((_, rowIdx) => (
+                <div
+                  key={rowIdx}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-5 gap-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <Skeleton className="h-7 w-7 rounded-lg shrink-0" />
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-5 w-28 rounded-md" />
+                        <Skeleton className="h-4 w-16 rounded-full" />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="h-3.5 w-24 rounded-md" />
+                        <Skeleton className="h-3.5 w-16 rounded-md" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 pl-10 sm:pl-0">
+                    <div className="space-y-1 text-right">
+                      <Skeleton className="h-5 w-16 rounded-md ml-auto" />
+                      <Skeleton className="h-3 w-10 rounded-md ml-auto" />
+                    </div>
+                    <Skeleton className="h-8 w-28 rounded-xl shrink-0" />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         ))}
