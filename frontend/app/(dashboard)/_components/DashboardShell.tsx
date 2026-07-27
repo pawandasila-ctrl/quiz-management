@@ -4,7 +4,7 @@ import React, { useCallback, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter, usePathname } from "next/navigation";
-import { LogOut, GraduationCap, Sparkles, AlertCircle, RotateCcw } from "lucide-react";
+import { LogOut, GraduationCap, Sparkles, AlertCircle, RotateCcw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -112,39 +112,11 @@ export default function DashboardShell({ children }: DashboardShellProps) {
     );
   }
 
-  // Render Error UI if connection failed or session expired
+  // If session is expired or logging out, render clean loading spinner while redirecting
   if (!user) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background p-4">
-        <div className="text-center space-y-4 max-w-md p-6 rounded-xl border border-border bg-card shadow-sm">
-          <div className="h-12 w-12 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
-            <AlertCircle className="h-6 w-6" />
-          </div>
-          <div className="space-y-1">
-            <h2 className="text-lg font-semibold text-foreground">Authentication Error</h2>
-            <p className="text-xs text-muted-foreground">
-              Unable to verify your session or connect to the server backend.
-            </p>
-          </div>
-          <div className="flex items-center justify-center gap-3 pt-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => window.location.reload()}
-              className="text-xs gap-1.5"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              <span>Retry</span>
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => router.replace("/login")}
-              className="text-xs"
-            >
-              Go to Login
-            </Button>
-          </div>
-        </div>
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
