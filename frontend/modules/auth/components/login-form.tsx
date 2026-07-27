@@ -63,17 +63,16 @@ export default function LoginForm() {
   );
 
   return (
-    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-slate-950 p-4 sm:p-6 lg:p-8 text-slate-100 selection:bg-indigo-500 selection:text-white">
-      {/* Ambient background glow effects */}
-      <div className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-indigo-600/20 blur-[120px]" />
-      <div className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-purple-600/20 blur-[120px]" />
+    <div className="min-h-screen w-full lg:grid lg:grid-cols-2 bg-background text-foreground">
+      {/* Left Brand Panel - Minimalist Editorial (Visible on lg screens) */}
+      <div className="relative hidden lg:flex flex-col justify-between p-12 bg-slate-900 text-slate-100 overflow-hidden dark:bg-slate-950">
+        {/* Subtle grid pattern overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30" />
 
-      <div className="relative z-10 w-full max-w-md space-y-6">
-        {/* Brand Header */}
-        <div className="text-center space-y-3">
-          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/20">
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold shadow-sm">
             <svg
-              className="h-7 w-7"
+              className="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -82,7 +81,7 @@ export default function LoginForm() {
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2}
+                strokeWidth={2.5}
                 d="M12 14l9-5-9-5-9 5 9 5z"
               />
               <path
@@ -93,21 +92,65 @@ export default function LoginForm() {
               />
             </svg>
           </div>
-          <div>
-            <h1 className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-              Quiz System
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Sign in to access your assessment console
-            </p>
+          <span className="font-heading text-lg font-bold tracking-tight">
+            Quiz System
+          </span>
+        </div>
+
+        <div className="relative z-10 space-y-4 max-w-md">
+          <p className="font-heading text-2xl font-bold leading-snug text-white">
+            &ldquo;Assessments engineered for clarity, real-time analytics, and instant feedback.&rdquo;
+          </p>
+          <div className="flex items-center gap-4 text-xs text-slate-400 font-medium pt-2">
+            <span>• Automated Grading</span>
+            <span>• Leaderboard Insights</span>
+            <span>• Anti-Cheat Security</span>
           </div>
         </div>
 
-        {/* Glass Card */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-6 sm:p-8 shadow-2xl backdrop-blur-xl space-y-5">
+        <div className="relative z-10 text-xs text-slate-500 font-medium">
+          © {new Date().getFullYear()} Quiz Platform. All rights reserved.
+        </div>
+      </div>
+
+      {/* Right Form Panel - Clean Minimalist Form */}
+      <div className="flex flex-col items-center justify-center p-6 sm:p-12 lg:p-16">
+        <div className="w-full max-w-sm space-y-8">
+          {/* Mobile Brand Logo */}
+          <div className="flex items-center gap-2.5 lg:hidden mb-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold shadow-xs">
+              <svg
+                className="h-4.5 w-4.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d="M12 14l9-5-9-5-9 5 9 5z"
+                />
+              </svg>
+            </div>
+            <span className="font-heading text-base font-bold tracking-tight text-foreground">
+              Quiz System
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
+              Sign in to your account
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              Enter your email address and password to continue.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs font-semibold text-slate-300">
+              <Label htmlFor="email" className="text-xs font-semibold text-foreground">
                 Email Address
               </Label>
               <Input
@@ -119,18 +162,18 @@ export default function LoginForm() {
                 disabled={loading}
                 className={
                   formErrors.email
-                    ? "border-red-500 focus-visible:ring-red-500 h-10 bg-slate-950/60 text-white placeholder:text-slate-500"
-                    : "h-10 bg-slate-950/60 border-slate-800 focus-visible:ring-indigo-500 text-white placeholder:text-slate-500"
+                    ? "border-destructive focus-visible:ring-destructive h-10 text-sm"
+                    : "h-10 text-sm border-border focus-visible:ring-primary"
                 }
               />
               {formErrors.email && (
-                <p className="text-xs font-medium text-red-400">{formErrors.email}</p>
+                <p className="text-xs font-medium text-destructive">{formErrors.email}</p>
               )}
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-xs font-semibold text-slate-300">
+                <Label htmlFor="password" className="text-xs font-semibold text-foreground">
                   Password
                 </Label>
               </div>
@@ -143,30 +186,33 @@ export default function LoginForm() {
                 disabled={loading}
                 className={
                   formErrors.password
-                    ? "border-red-500 focus-visible:ring-red-500 h-10 bg-slate-950/60 text-white placeholder:text-slate-500"
-                    : "h-10 bg-slate-950/60 border-slate-800 focus-visible:ring-indigo-500 text-white placeholder:text-slate-500"
+                    ? "border-destructive focus-visible:ring-destructive h-10 text-sm"
+                    : "h-10 text-sm border-border focus-visible:ring-primary"
                 }
               />
               {formErrors.password && (
-                <p className="text-xs font-medium text-red-400">{formErrors.password}</p>
+                <p className="text-xs font-medium text-destructive">{formErrors.password}</p>
               )}
             </div>
 
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-10 font-semibold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-600/25 transition-all duration-200"
+              className="w-full h-10 font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs transition-all duration-150"
             >
-              {loading ? "Authenticating..." : "Log in to Account"}
+              {loading ? "Signing in..." : "Sign In"}
             </Button>
-          </div>
-        </form>
+          </form>
 
-        <div className="text-center text-xs text-slate-400">
-          Don&apos;t have an account?{" "}
-          <Link href="/register" className="font-semibold text-indigo-400 hover:text-indigo-300 underline underline-offset-4">
-            Sign up as Student
-          </Link>
+          <div className="text-center text-xs text-muted-foreground pt-2">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/register"
+              className="font-semibold text-primary hover:underline underline-offset-4"
+            >
+              Create student account
+            </Link>
+          </div>
         </div>
       </div>
     </div>
