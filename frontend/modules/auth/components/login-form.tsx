@@ -4,16 +4,27 @@ import React, { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function LoginForm() {
   const { login, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [formErrors, setFormErrors] = useState<{ email?: string; password?: string }>({});
+  const [formErrors, setFormErrors] = useState<{
+    email?: string;
+    password?: string;
+  }>({});
 
   const validate = React.useCallback(() => {
     const errors: { email?: string; password?: string } = {};
@@ -42,24 +53,29 @@ export default function LoginForm() {
       } catch (err: unknown) {
         let errorMessage = "Incorrect email or password.";
         if (err && typeof err === "object" && "response" in err) {
-          const responseErr = err as { response?: { data?: { detail?: string | { msg?: string }[] } } };
+          const responseErr = err as {
+            response?: { data?: { detail?: string | { msg?: string }[] } };
+          };
           const detail = responseErr.response?.data?.detail;
           if (detail) {
             if (typeof detail === "string") {
               errorMessage = detail;
             } else if (Array.isArray(detail)) {
-              errorMessage = detail.map((d: { msg?: string }) => d.msg || JSON.stringify(d)).join(", ");
+              errorMessage = detail
+                .map((d: { msg?: string }) => d.msg || JSON.stringify(d))
+                .join(", ");
             } else {
               errorMessage = JSON.stringify(detail);
             }
           }
         } else if (err && typeof err === "object" && "request" in err) {
-          errorMessage = "Could not reach the server. Please check your connection and try again.";
+          errorMessage =
+            "Could not reach the server. Please check your connection and try again.";
         }
         toast.error(errorMessage);
       }
     },
-    [email, password, login, validate]
+    [email, password, login, validate],
   );
 
   return (
@@ -99,7 +115,8 @@ export default function LoginForm() {
 
         <div className="relative z-10 space-y-4 max-w-md">
           <p className="font-heading text-2xl font-bold leading-snug text-white">
-            &ldquo;Assessments engineered for clarity, real-time analytics, and instant feedback.&rdquo;
+            &ldquo;Assessments engineered for clarity, real-time analytics, and
+            instant feedback.&rdquo;
           </p>
           <div className="flex items-center gap-4 text-xs text-slate-400 font-medium pt-2">
             <span>• Automated Grading</span>
@@ -113,9 +130,9 @@ export default function LoginForm() {
         </div>
       </div>
 
-      {/* Right Form Panel - Clean Minimalist Form */}
+      {/* Right Form Panel - Shadcn Card Form */}
       <div className="flex flex-col items-center justify-center p-6 sm:p-12 lg:p-16">
-        <div className="w-full max-w-sm space-y-8">
+        <div className="w-full max-w-sm space-y-6">
           {/* Mobile Brand Logo */}
           <div className="flex items-center gap-2.5 lg:hidden mb-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold shadow-xs">
@@ -139,80 +156,93 @@ export default function LoginForm() {
             </span>
           </div>
 
-          <div className="space-y-2">
-            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-              Sign in to your account
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Enter your email address and password to continue.
-            </p>
-          </div>
+          <form onSubmit={handleSubmit}>
+            <Card className="border-border/80 rounded-2xl shadow-sm">
+              <CardHeader className="space-y-1.5 pb-4">
+                <CardTitle className="font-heading text-2xl font-bold tracking-tight text-foreground">
+                  Sign in to your account
+                </CardTitle>
+                <CardDescription className="text-xs text-muted-foreground">
+                  Enter your email address and password below to continue.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="email"
+                    className="text-xs font-semibold text-foreground"
+                  >
+                    Email Address
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
+                    className={
+                      formErrors.email
+                        ? "border-destructive focus-visible:ring-destructive h-10 text-sm"
+                        : "h-10 text-sm border-border focus-visible:ring-primary"
+                    }
+                  />
+                  {formErrors.email && (
+                    <p className="text-xs font-medium text-destructive">
+                      {formErrors.email}
+                    </p>
+                  )}
+                </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs font-semibold text-foreground">
-                Email Address
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                className={
-                  formErrors.email
-                    ? "border-destructive focus-visible:ring-destructive h-10 text-sm"
-                    : "h-10 text-sm border-border focus-visible:ring-primary"
-                }
-              />
-              {formErrors.email && (
-                <p className="text-xs font-medium text-destructive">{formErrors.email}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-xs font-semibold text-foreground">
-                  Password
-                </Label>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-                className={
-                  formErrors.password
-                    ? "border-destructive focus-visible:ring-destructive h-10 text-sm"
-                    : "h-10 text-sm border-border focus-visible:ring-primary"
-                }
-              />
-              {formErrors.password && (
-                <p className="text-xs font-medium text-destructive">{formErrors.password}</p>
-              )}
-            </div>
-
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full h-10 font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs transition-all duration-150"
-            >
-              {loading ? "Signing in..." : "Sign In"}
-            </Button>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label
+                      htmlFor="password"
+                      className="text-xs font-semibold text-foreground"
+                    >
+                      Password
+                    </Label>
+                  </div>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
+                    className={
+                      formErrors.password
+                        ? "border-destructive focus-visible:ring-destructive h-10 text-sm"
+                        : "h-10 text-sm border-border focus-visible:ring-primary"
+                    }
+                  />
+                  {formErrors.password && (
+                    <p className="text-xs font-medium text-destructive">
+                      {formErrors.password}
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+              <CardFooter className="flex flex-col space-y-4 pt-2">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-10 font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs transition-all duration-150"
+                >
+                  {loading ? "Signing in..." : "Sign In"}
+                </Button>
+                <div className="text-center text-xs text-muted-foreground pt-1">
+                  Don&apos;t have an account?{" "}
+                  <Link
+                    href="/register"
+                    className="font-semibold text-primary hover:underline underline-offset-4"
+                  >
+                    Create student account
+                  </Link>
+                </div>
+              </CardFooter>
+            </Card>
           </form>
-
-          <div className="text-center text-xs text-muted-foreground pt-2">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/register"
-              className="font-semibold text-primary hover:underline underline-offset-4"
-            >
-              Create student account
-            </Link>
-          </div>
         </div>
       </div>
     </div>

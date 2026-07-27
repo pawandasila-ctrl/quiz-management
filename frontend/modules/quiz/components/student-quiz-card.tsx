@@ -52,7 +52,7 @@ export default function StudentQuizCard({
   return (
     <Card className="group flex flex-col border border-border/80 rounded-2xl shadow-sm hover:shadow-xl hover:border-primary/40 hover:-translate-y-1 transition-all duration-300 bg-card overflow-hidden">
       {/* Header */}
-      <CardHeader className="p-5 pb-3 space-y-2.5 bg-gradient-to-b from-accent/30 to-transparent">
+      <CardHeader className="p-5 pb-3 space-y-2.5 bg-linear-to-b from-accent/30 to-transparent">
         <div className="flex items-center justify-between gap-2">
           <Badge
             variant="outline"
@@ -65,7 +65,10 @@ export default function StudentQuizCard({
               Active Session
             </Badge>
           ) : !hasRemainingAttempts ? (
-            <Badge variant="secondary" className="text-[10px] font-semibold text-muted-foreground">
+            <Badge
+              variant="secondary"
+              className="text-[10px] font-semibold text-muted-foreground"
+            >
               Completed
             </Badge>
           ) : (

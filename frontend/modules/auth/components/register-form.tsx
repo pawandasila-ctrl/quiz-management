@@ -4,7 +4,14 @@ import React, { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -62,13 +69,17 @@ export default function RegisterForm() {
       } catch (err: unknown) {
         let errorMessage = "Registration failed. Please try again.";
         if (err && typeof err === "object" && "response" in err) {
-          const responseErr = err as { response?: { data?: { detail?: string | { msg?: string }[] } } };
+          const responseErr = err as {
+            response?: { data?: { detail?: string | { msg?: string }[] } };
+          };
           const detail = responseErr.response?.data?.detail;
           if (detail) {
             if (typeof detail === "string") {
               errorMessage = detail;
             } else if (Array.isArray(detail)) {
-              errorMessage = detail.map((d: { msg?: string }) => d.msg || JSON.stringify(d)).join(", ");
+              errorMessage = detail
+                .map((d: { msg?: string }) => d.msg || JSON.stringify(d))
+                .join(", ");
             } else {
               errorMessage = JSON.stringify(detail);
             }
@@ -77,7 +88,7 @@ export default function RegisterForm() {
         toast.error(errorMessage);
       }
     },
-    [name, email, password, register, validate]
+    [name, email, password, register, validate],
   );
 
   return (
@@ -85,7 +96,7 @@ export default function RegisterForm() {
       {/* Left Brand Panel - Minimalist Editorial (Visible on lg screens) */}
       <div className="relative hidden lg:flex flex-col justify-between p-12 bg-slate-900 text-slate-100 overflow-hidden dark:bg-slate-950">
         {/* Subtle grid pattern overlay */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-size-4rem_4rem [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30" />
 
         <div className="relative z-10 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold shadow-sm">
@@ -117,7 +128,8 @@ export default function RegisterForm() {
 
         <div className="relative z-10 space-y-4 max-w-md">
           <p className="font-heading text-2xl font-bold leading-snug text-white">
-            &ldquo;Join thousands of students mastering their skills through active testing.&rdquo;
+            &ldquo;Join thousands of students mastering their skills through
+            active testing.&rdquo;
           </p>
           <div className="flex items-center gap-4 text-xs text-slate-400 font-medium pt-2">
             <span>• Free Student Access</span>
@@ -131,7 +143,7 @@ export default function RegisterForm() {
         </div>
       </div>
 
-      {/* Right Form Panel - Clean Minimalist Form */}
+      {/* Right Form Panel - Shadcn Card Form */}
       <div className="flex flex-col items-center justify-center p-6 sm:p-12 lg:p-16">
         <div className="w-full max-w-sm space-y-6">
           {/* Mobile Brand Logo */}
@@ -157,122 +169,145 @@ export default function RegisterForm() {
             </span>
           </div>
 
-          <div className="space-y-2">
-            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-              Create your account
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Enter your details below to register as a student.
-            </p>
-          </div>
+          <form onSubmit={handleSubmit}>
+            <Card className="border-border/80 rounded-2xl shadow-sm">
+              <CardHeader className="space-y-1.5 pb-4">
+                <CardTitle className="font-heading text-2xl font-bold tracking-tight text-foreground">
+                  Create your account
+                </CardTitle>
+                <CardDescription className="text-xs text-muted-foreground">
+                  Enter your details below to register as a student.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3.5">
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="name"
+                    className="text-xs font-semibold text-foreground"
+                  >
+                    Full Name
+                  </Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="John Doe"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    disabled={loading}
+                    className={
+                      formErrors.name
+                        ? "border-destructive focus-visible:ring-destructive h-9.5 text-sm"
+                        : "h-9.5 text-sm border-border focus-visible:ring-primary"
+                    }
+                  />
+                  {formErrors.name && (
+                    <p className="text-xs font-medium text-destructive">
+                      {formErrors.name}
+                    </p>
+                  )}
+                </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="name" className="text-xs font-semibold text-foreground">
-                Full Name
-              </Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="John Doe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={loading}
-                className={
-                  formErrors.name
-                    ? "border-destructive focus-visible:ring-destructive h-9.5 text-sm"
-                    : "h-9.5 text-sm border-border focus-visible:ring-primary"
-                }
-              />
-              {formErrors.name && (
-                <p className="text-xs font-medium text-destructive">{formErrors.name}</p>
-              )}
-            </div>
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="email"
+                    className="text-xs font-semibold text-foreground"
+                  >
+                    Email Address
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
+                    className={
+                      formErrors.email
+                        ? "border-destructive focus-visible:ring-destructive h-9.5 text-sm"
+                        : "h-9.5 text-sm border-border focus-visible:ring-primary"
+                    }
+                  />
+                  {formErrors.email && (
+                    <p className="text-xs font-medium text-destructive">
+                      {formErrors.email}
+                    </p>
+                  )}
+                </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-xs font-semibold text-foreground">
-                Email Address
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                className={
-                  formErrors.email
-                    ? "border-destructive focus-visible:ring-destructive h-9.5 text-sm"
-                    : "h-9.5 text-sm border-border focus-visible:ring-primary"
-                }
-              />
-              {formErrors.email && (
-                <p className="text-xs font-medium text-destructive">{formErrors.email}</p>
-              )}
-            </div>
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="password"
+                    className="text-xs font-semibold text-foreground"
+                  >
+                    Password
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
+                    className={
+                      formErrors.password
+                        ? "border-destructive focus-visible:ring-destructive h-9.5 text-sm"
+                        : "h-9.5 text-sm border-border focus-visible:ring-primary"
+                    }
+                  />
+                  {formErrors.password && (
+                    <p className="text-xs font-medium text-destructive">
+                      {formErrors.password}
+                    </p>
+                  )}
+                </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-xs font-semibold text-foreground">
-                Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-                className={
-                  formErrors.password
-                    ? "border-destructive focus-visible:ring-destructive h-9.5 text-sm"
-                    : "h-9.5 text-sm border-border focus-visible:ring-primary"
-                }
-              />
-              {formErrors.password && (
-                <p className="text-xs font-medium text-destructive">{formErrors.password}</p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="confirm-password" className="text-xs font-semibold text-foreground">
-                Confirm Password
-              </Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                disabled={loading}
-                className={
-                  formErrors.confirmPassword
-                    ? "border-destructive focus-visible:ring-destructive h-9.5 text-sm"
-                    : "h-9.5 text-sm border-border focus-visible:ring-primary"
-                }
-              />
-              {formErrors.confirmPassword && (
-                <p className="text-xs font-medium text-destructive">{formErrors.confirmPassword}</p>
-              )}
-            </div>
-
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full h-10 font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs transition-all duration-150 mt-2"
-            >
-              {loading ? "Creating Account..." : "Create Account"}
-            </Button>
+                <div className="space-y-1.5">
+                  <Label
+                    htmlFor="confirm-password"
+                    className="text-xs font-semibold text-foreground"
+                  >
+                    Confirm Password
+                  </Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    disabled={loading}
+                    className={
+                      formErrors.confirmPassword
+                        ? "border-destructive focus-visible:ring-destructive h-9.5 text-sm"
+                        : "h-9.5 text-sm border-border focus-visible:ring-primary"
+                    }
+                  />
+                  {formErrors.confirmPassword && (
+                    <p className="text-xs font-medium text-destructive">
+                      {formErrors.confirmPassword}
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+              <CardFooter className="flex flex-col space-y-4 pt-2">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-10 font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs transition-all duration-150"
+                >
+                  {loading ? "Creating Account..." : "Create Account"}
+                </Button>
+                <div className="text-center text-xs text-muted-foreground pt-1">
+                  Already have an account?{" "}
+                  <Link
+                    href="/login"
+                    className="font-semibold text-primary hover:underline underline-offset-4"
+                  >
+                    Log in
+                  </Link>
+                </div>
+              </CardFooter>
+            </Card>
           </form>
-
-          <div className="text-center text-xs text-muted-foreground pt-2">
-            Already have an account?{" "}
-            <Link
-              href="/login"
-              className="font-semibold text-primary hover:underline underline-offset-4"
-            >
-              Log in
-            </Link>
-          </div>
         </div>
       </div>
     </div>

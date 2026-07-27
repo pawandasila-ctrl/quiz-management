@@ -4,7 +4,7 @@ import React, { useCallback, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter, usePathname } from "next/navigation";
-import { LogOut, GraduationCap, Sparkles, AlertCircle, RotateCcw, Loader2 } from "lucide-react";
+import { LogOut, GraduationCap, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -158,8 +158,16 @@ export default function DashboardShell({ children }: DashboardShellProps) {
                     {navItems.map((item) => {
                       const isActive = (() => {
                         if (pathname === item.url) return true;
-                        if (item.url === "/admin" && pathname.startsWith("/admin/quiz")) return true;
-                        if (item.url === "/dashboard" && pathname.startsWith("/dashboard/quiz")) return true;
+                        if (
+                          item.url === "/admin" &&
+                          pathname.startsWith("/admin/quiz")
+                        )
+                          return true;
+                        if (
+                          item.url === "/dashboard" &&
+                          pathname.startsWith("/dashboard/quiz")
+                        )
+                          return true;
                         return (
                           item.url !== "/admin" &&
                           item.url !== "/dashboard" &&

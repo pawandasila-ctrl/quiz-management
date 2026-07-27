@@ -1,9 +1,10 @@
 import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card } from "@/components/ui/card";
 
 export function QuizCardSkeleton() {
   return (
-    <div className="flex flex-col rounded-2xl border border-border/80 bg-card p-5 space-y-4 shadow-xs overflow-hidden">
+    <Card className="flex flex-col rounded-2xl border border-border/80 bg-card p-5 space-y-4 shadow-xs overflow-hidden">
       {/* Category Badge & Status */}
       <div className="flex items-center justify-between gap-2">
         <Skeleton className="h-5 w-24 rounded-full" />
@@ -34,7 +35,7 @@ export function QuizCardSkeleton() {
         <Skeleton className="h-9 flex-1 rounded-xl" />
         <Skeleton className="h-9 flex-1 rounded-xl" />
       </div>
-    </div>
+    </Card>
   );
 }
 
