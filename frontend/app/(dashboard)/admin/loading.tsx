@@ -8,7 +8,7 @@ export default function AdminDashboardLoading() {
     <div className="space-y-8 animate-pulse">
       {/* Admin Hero Header Skeleton */}
       <Card className="rounded-3xl border border-border bg-card">
-        <CardContent className="p-6 sm:p-8 space-y-4">
+        <CardContent className="px-6 py-4 sm:px-8 sm:py-5 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div className="space-y-3 max-w-xl">
               <Skeleton className="h-6 w-44 rounded-full" />
