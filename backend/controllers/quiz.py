@@ -184,6 +184,7 @@ async def update_quiz(db: AsyncSession, quiz_id: int, quiz_in: QuizUpdate) -> Qu
 
     db.add(quiz)
     await db.commit()
+    await invalidate_pattern("quizzes:*")
     return await get_quiz_by_id(db, quiz_id)
 
 async def delete_quiz(db: AsyncSession, quiz_id: int) -> None:
@@ -320,12 +321,15 @@ async def create_questions_bulk(db: AsyncSession, quiz_id: int, questions_in: Li
     from controllers.result import re_grade_quiz_attempts
     await re_grade_quiz_attempts(db, quiz_id)
 
-    reloaded_questions = []
-    for cq in created_questions:
-        rq = await get_question_by_id(db, cq.id)
-        reloaded_questions.append(rq)
-
-    return reloaded_questions
+    created_ids = [cq.id for cq in created_questions]
+    bulk_query = (
+        select(Question)
+        .options(selectinload(Question.options))
+        .filter(Question.id.in_(created_ids))
+        .order_by(Question.order)
+    )
+    res = await db.execute(bulk_query)
+    return list(res.scalars().all())
 
 async def update_question(db: AsyncSession, question_id: int, question_in: QuestionCreate) -> Question:
     question = await get_question_by_id(db, question_id)

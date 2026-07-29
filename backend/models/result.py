@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List, Optional, TYPE_CHECKING
-from sqlalchemy import Column, DateTime, Enum, Integer, ForeignKey, UniqueConstraint, Boolean
+from sqlalchemy import Column, DateTime, Enum, Integer, ForeignKey, UniqueConstraint, Boolean, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from config.database import Base
@@ -53,6 +53,11 @@ class QuizAttempt(Base):
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     submitted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     graded_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        Index("idx_attempt_student_quiz", "student_id", "quiz_id"),
+        Index("idx_attempt_status_submitted", "status", "submitted_at"),
+    )
 
     # Relationships
     quiz: Mapped["Quiz"] = relationship("Quiz", back_populates="attempts")

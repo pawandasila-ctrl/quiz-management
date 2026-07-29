@@ -79,47 +79,11 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
-import hashlib
-from fastapi.responses import Response as FastAPIResponse
+from middlewares.etag import etag_middleware
+from middlewares.security import security_headers_middleware
 
-@app.middleware("http")
-async def etag_middleware(request: Request, call_next):
-    response = await call_next(request)
-    if request.method == "GET" and response.status_code == 200:
-        cache_control = response.headers.get("cache-control", "")
-        if "no-store" in cache_control:
-            return response
-
-        body = b"".join([chunk async for chunk in response.body_iterator])
-        etag = f'"{hashlib.md5(body).hexdigest()}"'
-        
-        # Check If-None-Match from client browser
-        if_none_match = request.headers.get("if-none-match")
-        if if_none_match and if_none_match == etag:
-            res_headers = dict(response.headers)
-            res_headers["ETag"] = etag
-            return FastAPIResponse(status_code=304, headers=res_headers)
-
-        res_headers = dict(response.headers)
-        res_headers["ETag"] = etag
-        return FastAPIResponse(
-            content=body,
-            status_code=response.status_code,
-            headers=res_headers,
-            media_type=response.media_type
-        )
-    return response
-
-@app.middleware("http")
-async def add_security_headers(request: Request, call_next):
-    response = await call_next(request)
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
-    return response
+app.middleware("http")(etag_middleware)
+app.middleware("http")(security_headers_middleware)
 
 # Routers
 app.include_router(auth_router, prefix=API_PREFIX)

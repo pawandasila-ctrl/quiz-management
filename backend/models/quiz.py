@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List, Optional, TYPE_CHECKING
-from sqlalchemy import Boolean, DateTime, Enum, Integer, String, Text, ForeignKey
+from sqlalchemy import Boolean, DateTime, Enum, Integer, String, Text, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 from config.database import Base
@@ -37,7 +37,7 @@ class Quiz(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     category_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True, index=True)
     created_by_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    status: Mapped[QuizStatus] = mapped_column(Enum(QuizStatus), nullable=False, default=QuizStatus.DRAFT)
+    status: Mapped[QuizStatus] = mapped_column(Enum(QuizStatus), nullable=False, default=QuizStatus.DRAFT, index=True)
     time_limit_minutes: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     pass_mark: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     total_marks: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -46,8 +46,13 @@ class Quiz(Base):
     results_visible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     published_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     closed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now(), index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        Index("idx_quiz_status_created", "status", "created_at"),
+        Index("idx_quiz_category_status", "category_id", "status"),
+    )
 
     # Relationships
     category: Mapped[Optional["Category"]] = relationship("Category", back_populates="quizzes")
