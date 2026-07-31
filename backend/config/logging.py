@@ -36,21 +36,11 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_data)
 
 
-class ColoredFormatter(logging.Formatter):
-    """Development formatter that formats levels with colors and includes file/line for warnings/errors."""
-
-    COLORS = {
-        logging.DEBUG: "\033[36m",    # Cyan
-        logging.INFO: "\033[32m",     # Green
-        logging.WARNING: "\033[33m",  # Yellow
-        logging.ERROR: "\033[31m",    # Red
-        logging.CRITICAL: "\033[41;37m", # Red background, white text
-    }
-    RESET = "\033[0m"
+class PlainFormatter(logging.Formatter):
+    """Development formatter that emits clean plain text without ANSI colors."""
 
     def format(self, record: logging.LogRecord) -> str:
-        color = self.COLORS.get(record.levelno, "")
-        levelname = f"{color}{record.levelname:<8}{self.RESET}"
+        levelname = f"{record.levelname:<8}"
 
         if record.levelno >= logging.ERROR:
             fmt = f"%(asctime)s {levelname} %(name)s [%(pathname)s:%(lineno)d in %(funcName)s]: %(message)s"
@@ -67,7 +57,7 @@ def setup_logging(environment: str = "development") -> None:
     """
     Configure root logger.
     - production  → JSON lines to stdout (machine-parseable)
-    - development → human-readable coloured text
+    - development → human-readable plain text (no colors)
     """
     root = logging.getLogger()
     root.setLevel(logging.INFO)
@@ -78,7 +68,7 @@ def setup_logging(environment: str = "development") -> None:
     if environment == "production":
         handler.setFormatter(JSONFormatter())
     else:
-        handler.setFormatter(ColoredFormatter())
+        handler.setFormatter(PlainFormatter())
 
     root.addHandler(handler)
 
