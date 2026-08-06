@@ -27,7 +27,7 @@ async def _cleanup_expired_sessions() -> None:
         try:
             async with SessionLocal() as db:
                 result = await db.execute(
-                    text("DELETE FROM sessions WHERE expires_at < now()")
+                    text("DELETE FROM sessions WHERE expires_at < now() ")
                 )
                 await db.commit()
                 if result.rowcount:
