@@ -1,6 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import field_validator
-from typing import List, Any
+from typing import List, Any, Union
 import json
 
 
@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str   
     REDIS_URL: str = "redis://localhost:6379/0"
     ENVIRONMENT: str = "development"  
-    CORS_ORIGINS: List[str] = ["http://localhost:3000"]
+    CORS_ORIGINS: Union[List[str], str] = ["http://localhost:3000"]
     COOKIE_DOMAIN: str | None = None
 
     # ── Cloudinary ────────────────────────────────────────────────────────────
