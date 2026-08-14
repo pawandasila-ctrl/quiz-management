@@ -30,10 +30,11 @@ class Settings(BaseSettings):
                 try:
                     parsed = json.loads(v)
                     if isinstance(parsed, list):
-                        return parsed
+                        return [str(item).strip() for item in parsed if str(item).strip()]
                 except Exception:
                     pass
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
+                v = v[1:-1].strip()
+            return [origin.strip().strip("'\"") for origin in v.split(",") if origin.strip().strip("'\"")]
         if isinstance(v, list):
             return v
         return ["http://localhost:3000"]
